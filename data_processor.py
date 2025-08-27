@@ -9,9 +9,11 @@ class JobDataProcessor:
     
     def __init__(self):
         self.df = None
+        self.categories_data = {}  # Store data by categories
+        self.trend_reset_point = None  # Point from which to calculate trends
         
-    def process_json_data(self, json_data):
-        """Convert JSON data to processed DataFrame."""
+    def process_json_data(self, json_data, category=None, append_to_existing=False):
+        """Convert JSON data to processed DataFrame with category support."""
         if not isinstance(json_data, list):
             raise ValueError("JSON data should be a list of job objects")
         
@@ -30,8 +32,35 @@ class JobDataProcessor:
         # Clean and normalize data
         df = self._clean_data(df)
         
-        self.df = df
-        return df
+        # Add category column
+        if category:
+            df['category'] = category.lower().strip()
+        else:
+            df['category'] = 'default'
+        
+        # Add upload timestamp for trend tracking
+        df['upload_timestamp'] = pd.Timestamp.now()
+        
+        # Handle duplicate detection and data merging
+        if append_to_existing and self.df is not None:
+            # Remove duplicates based on title, company, city, and skills
+            df = self._remove_duplicates(df, self.df)
+            # Append to existing data
+            self.df = pd.concat([self.df, df], ignore_index=True)
+        else:
+            self.df = df
+        
+        # Store by category
+        category_key = category.lower().strip() if category else 'default'
+        if category_key not in self.categories_data:
+            self.categories_data[category_key] = df.copy()
+        else:
+            # Merge with existing category data, removing duplicates
+            existing_category_df = self.categories_data[category_key]
+            new_df = self._remove_duplicates(df, existing_category_df)
+            self.categories_data[category_key] = pd.concat([existing_category_df, new_df], ignore_index=True)
+        
+        return self.df
     
     def _clean_data(self, df):
         """Clean and normalize the data."""
@@ -98,6 +127,29 @@ class JobDataProcessor:
                 normalized.append(clean_skill)
         
         return normalized
+    
+    def _remove_duplicates(self, new_df, existing_df):
+        """Remove duplicates from new_df based on existing_df."""
+        if existing_df.empty:
+            return new_df
+        
+        # Create composite key for duplicate detection
+        def create_key(row):
+            skills_str = '|'.join(sorted(row['requiredSkills'])) if row['requiredSkills'] else ''
+            return f"{row['title']}_{row['companyName']}_{row['city']}_{skills_str}".lower()
+        
+        existing_keys = set(existing_df.apply(create_key, axis=1))
+        new_df_with_keys = new_df.copy()
+        new_df_with_keys['_key'] = new_df_with_keys.apply(create_key, axis=1)
+        
+        # Filter out duplicates
+        unique_new_df = new_df_with_keys[~new_df_with_keys['_key'].isin(existing_keys)]
+        
+        # Remove the temporary key column
+        if '_key' in unique_new_df.columns:
+            unique_new_df = unique_new_df.drop('_key', axis=1)
+        
+        return unique_new_df
     
     def get_all_skills(self):
         """Get all unique skills from the dataset."""
@@ -222,3 +274,51 @@ class JobDataProcessor:
             summary['Top Skill Demand'] = f"{all_skills.iloc[0]} jobs ({(all_skills.iloc[0]/len(df)*100):.1f}%)"
         
         return summary
+    
+    def get_categories(self):
+        """Get all available categories."""
+        return list(self.categories_data.keys())
+    
+    def get_data_by_category(self, category=None):
+        """Get data filtered by category."""
+        if category is None or category == 'all':
+            return self.df
+        
+        category_key = category.lower().strip()
+        if category_key in self.categories_data:
+            return self.categories_data[category_key]
+        else:
+            return pd.DataFrame()
+    
+    def clear_category_data(self, category=None):
+        """Clear data for specific category or all data."""
+        if category is None or category == 'all':
+            self.df = pd.DataFrame()
+            self.categories_data = {}
+        else:
+            category_key = category.lower().strip()
+            if category_key in self.categories_data:
+                del self.categories_data[category_key]
+                # Rebuild main dataframe
+                if self.categories_data:
+                    all_dfs = list(self.categories_data.values())
+                    self.df = pd.concat(all_dfs, ignore_index=True)
+                else:
+                    self.df = pd.DataFrame()
+    
+    def set_trend_reset_point(self):
+        """Set current timestamp as trend reset point."""
+        self.trend_reset_point = pd.Timestamp.now()
+    
+    def get_data_after_trend_reset(self, df=None):
+        """Get data uploaded after trend reset point."""
+        if df is None:
+            df = self.df
+        
+        if self.trend_reset_point is None or df.empty:
+            return df
+        
+        if 'upload_timestamp' not in df.columns:
+            return df
+        
+        return df[df['upload_timestamp'] >= self.trend_reset_point]
