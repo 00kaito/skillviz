@@ -270,6 +270,67 @@ class JobMarketVisualizer:
         
         return fig
     
+    def create_skills_trends_chart(self, df=None, top_skills=5):
+        """Create a line chart showing skills demand trends over time."""
+        if df is None:
+            df = self.df
+            
+        if 'publishedAt' not in df.columns or df['publishedAt'].isna().all():
+            return self._create_empty_chart("Publishing date data not available for skills trends")
+        
+        # Filter out null dates
+        df_with_dates = df.dropna(subset=['publishedAt'])
+        
+        if df_with_dates.empty:
+            return self._create_empty_chart("No valid publishing dates found for skills trends")
+        
+        # Get top skills first
+        all_skills = []
+        for skills_list in df_with_dates['requiredSkills']:
+            all_skills.extend(skills_list)
+        
+        top_skills_list = [skill for skill, _ in Counter(all_skills).most_common(top_skills)]
+        
+        if not top_skills_list:
+            return self._create_empty_chart("No skills data available for trends")
+        
+        # Group by date and skill
+        df_with_dates['date'] = df_with_dates['publishedAt'].dt.date
+        
+        # Create data for line chart
+        trend_data = []
+        for date in sorted(df_with_dates['date'].unique()):
+            date_df = df_with_dates[df_with_dates['date'] == date]
+            
+            for skill in top_skills_list:
+                count = sum(1 for skills_list in date_df['requiredSkills'] if skill in skills_list)
+                trend_data.append({
+                    'Date': date,
+                    'Skill': skill,
+                    'Count': count
+                })
+        
+        if not trend_data:
+            return self._create_empty_chart("No trend data available")
+        
+        trend_df = pd.DataFrame(trend_data)
+        
+        fig = px.line(
+            trend_df,
+            x='Date',
+            y='Count',
+            color='Skill',
+            title=f'Top {top_skills} Skills Demand Over Time',
+            labels={'Date': 'Publication Date', 'Count': 'Number of Job Postings'}
+        )
+        
+        fig.update_layout(
+            height=400,
+            hovermode='x unified'
+        )
+        
+        return fig
+    
     def _create_empty_chart(self, message):
         """Create an empty chart with a message."""
         fig = go.Figure()

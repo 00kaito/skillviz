@@ -95,10 +95,6 @@ def main():
                     st.session_state.visualizer = None
                     st.rerun()
             
-            with col2:
-                if st.button("🔄 Reset Trends", type="secondary"):
-                    st.session_state.processor.set_trend_reset_point()
-                    st.success("✅ Trend reset point set!")
     
     # Main content area
     if st.session_state.data_loaded and st.session_state.df is not None:
@@ -341,21 +337,15 @@ def display_analytics():
         st.header("Market Trends")
         
         # Publishing trends over time
-        trend_data = processor.get_data_after_trend_reset(display_df)
+        if visualizer and 'publishedAt' in display_df.columns:
+            fig_trends = visualizer.create_publishing_trends_chart(display_df)
+            st.plotly_chart(fig_trends, width='stretch')
         
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            if visualizer and 'publishedAt' in display_df.columns:
-                fig_trends = visualizer.create_publishing_trends_chart(trend_data)
-                st.plotly_chart(fig_trends, width='stretch')
-        
-        with col2:
-            st.subheader("Trend Info")
-            st.write(f"**Total jobs in trends:** {len(trend_data)}")
-            if processor.trend_reset_point:
-                st.write(f"**Reset point:** {processor.trend_reset_point.strftime('%Y-%m-%d %H:%M')}")
-            else:
-                st.write("**Reset point:** Not set")
+        # Skills trends over time
+        st.subheader("Skills Demand Over Time")
+        if visualizer and 'publishedAt' in display_df.columns:
+            fig_skills_trends = visualizer.create_skills_trends_chart(display_df)
+            st.plotly_chart(fig_skills_trends, width='stretch')
         
         # Market summary
         st.subheader("Market Summary")

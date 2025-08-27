@@ -10,7 +10,6 @@ class JobDataProcessor:
     def __init__(self):
         self.df = None
         self.categories_data = {}  # Store data by categories
-        self.trend_reset_point = None  # Point from which to calculate trends
         
     def process_json_data(self, json_data, category=None, append_to_existing=False):
         """Convert JSON data to processed DataFrame with category support."""
@@ -306,19 +305,3 @@ class JobDataProcessor:
                 else:
                     self.df = pd.DataFrame()
     
-    def set_trend_reset_point(self):
-        """Set current timestamp as trend reset point."""
-        self.trend_reset_point = pd.Timestamp.now()
-    
-    def get_data_after_trend_reset(self, df=None):
-        """Get data uploaded after trend reset point."""
-        if df is None:
-            df = self.df
-        
-        if self.trend_reset_point is None or df.empty:
-            return df
-        
-        if 'upload_timestamp' not in df.columns:
-            return df
-        
-        return df[df['upload_timestamp'] >= self.trend_reset_point]
