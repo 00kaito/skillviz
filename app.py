@@ -3,6 +3,7 @@ import json
 import pandas as pd
 from data_processor import JobDataProcessor
 from visualizations import JobMarketVisualizer
+from auth import AuthManager, show_login_form, show_auth_header
 import io
 
 def main():
@@ -13,8 +14,19 @@ def main():
         initial_sidebar_state="expanded"
     )
     
-    st.title("📊 Job Market Analytics for Engineers")
+    # Initialize auth manager
+    auth_manager = AuthManager()
+    
+    st.title("📊 SkillViz Analytics for Engineers")
     st.markdown("### Analyze skill requirements, experience levels, and location-based hiring trends")
+    
+    # Check if user is authenticated
+    if not auth_manager.is_authenticated():
+        show_login_form()
+        return
+    
+    # Show authentication header
+    show_auth_header()
     
     # Initialize session state
     if 'data_loaded' not in st.session_state:
@@ -28,65 +40,65 @@ def main():
     
     # Sidebar for data input and filters
     with st.sidebar:
-        st.header("📂 Data Input")
-        
-        # Category input
-        st.subheader("🏷️ Category Management")
-        category = st.text_input("Enter category for upload:", placeholder="e.g., Java, Python, Data Science")
-        
-        # Upload mode selection
-        append_mode = st.checkbox("Append to existing data (avoid duplicates)", value=st.session_state.append_mode)
-        st.session_state.append_mode = append_mode
-        
-        # Data input options
-        input_method = st.radio("Choose input method:", ["Upload JSON file", "Paste JSON data"])
-        
-        if input_method == "Upload JSON file":
-            uploaded_file = st.file_uploader("Upload job data JSON file", type=['json'])
-            if uploaded_file is not None:
-                try:
-                    json_data = json.load(uploaded_file)
-                    if process_data(json_data, category=category, append_to_existing=append_mode):
-                        added_count = len(json_data)
-                        category_text = f" to category '{category}'" if category else ""
-                        st.success(f"✅ {added_count} jobs loaded successfully{category_text}!")
-                except json.JSONDecodeError:
-                    st.error("❌ Invalid JSON file. Please check the format.")
-                except Exception as e:
-                    st.error(f"❌ Error loading file: {str(e)}")
-        
-        else:
-            json_text = st.text_area("Paste JSON data here:", height=200)
-            if st.button("Load Data"):
-                if json_text.strip():
+        # Admin-only data input section
+        if auth_manager.is_admin():
+            st.header("📂 Data Input (Admin Only)")
+            
+            # Category input
+            st.subheader("🏷️ Category Management")
+            category = st.text_input("Enter category for upload:", placeholder="e.g., Java, Python, Data Science")
+            
+            # Upload mode selection
+            append_mode = st.checkbox("Append to existing data (avoid duplicates)", value=st.session_state.append_mode)
+            st.session_state.append_mode = append_mode
+            
+            # Data input options
+            input_method = st.radio("Choose input method:", ["Upload JSON file", "Paste JSON data"])
+            
+            if input_method == "Upload JSON file":
+                uploaded_file = st.file_uploader("Upload job data JSON file", type=['json'])
+                if uploaded_file is not None:
                     try:
-                        json_data = json.loads(json_text)
+                        json_data = json.load(uploaded_file)
                         if process_data(json_data, category=category, append_to_existing=append_mode):
                             added_count = len(json_data)
                             category_text = f" to category '{category}'" if category else ""
                             st.success(f"✅ {added_count} jobs loaded successfully{category_text}!")
                     except json.JSONDecodeError:
-                        st.error("❌ Invalid JSON format. Please check your data.")
+                        st.error("❌ Invalid JSON file. Please check the format.")
                     except Exception as e:
-                        st.error(f"❌ Error processing data: {str(e)}")
-                else:
-                    st.warning("⚠️ Please paste JSON data first.")
-        
-        # Data management controls
-        if st.session_state.data_loaded:
-            st.divider()
-            st.subheader("🛠️ Data Management")
+                        st.error(f"❌ Error loading file: {str(e)}")
             
-            # Show current categories
-            if st.session_state.categories:
-                st.write("**Available categories:**")
-                for cat in st.session_state.categories:
-                    cat_data = st.session_state.processor.get_data_by_category(cat)
-                    st.write(f"- {cat.title()}: {len(cat_data)} jobs")
+            else:
+                json_text = st.text_area("Paste JSON data here:", height=200)
+                if st.button("Load Data"):
+                    if json_text.strip():
+                        try:
+                            json_data = json.loads(json_text)
+                            if process_data(json_data, category=category, append_to_existing=append_mode):
+                                added_count = len(json_data)
+                                category_text = f" to category '{category}'" if category else ""
+                                st.success(f"✅ {added_count} jobs loaded successfully{category_text}!")
+                        except json.JSONDecodeError:
+                            st.error("❌ Invalid JSON format. Please check your data.")
+                        except Exception as e:
+                            st.error(f"❌ Error processing data: {str(e)}")
+                    else:
+                        st.warning("⚠️ Please paste JSON data first.")
             
-            # Clear data options
-            col1, col2 = st.columns(2)
-            with col1:
+            # Data management controls
+            if st.session_state.data_loaded:
+                st.divider()
+                st.subheader("🛠️ Data Management (Admin Only)")
+                
+                # Show current categories
+                if st.session_state.categories:
+                    st.write("**Available categories:**")
+                    for cat in st.session_state.categories:
+                        cat_data = st.session_state.processor.get_data_by_category(cat)
+                        st.write(f"- {cat.title()}: {len(cat_data)} jobs")
+                
+                # Clear data options
                 if st.button("🗑️ Clear All Data", type="secondary"):
                     st.session_state.processor.clear_category_data()
                     st.session_state.data_loaded = False
@@ -94,6 +106,10 @@ def main():
                     st.session_state.categories = []
                     st.session_state.visualizer = None
                     st.rerun()
+        
+        else:
+            # User info for non-admin users
+            st.info("👁️ **Viewing Mode**\n\nYou can browse all available job market data and analytics. Data upload is restricted to administrators.")
             
     
     # Main content area
@@ -131,10 +147,17 @@ def process_data(json_data, category=None, append_to_existing=True):
 
 def display_welcome_screen():
     """Display welcome screen with instructions."""
-    st.info("👈 Please upload a JSON file or paste JSON data in the sidebar to begin analysis.")
+    auth_manager = AuthManager()
+    
+    if auth_manager.is_admin():
+        st.info("👈 Please upload a JSON file or paste JSON data in the sidebar to begin analysis.")
+    else:
+        st.info("📊 Welcome to SkillViz Analytics!\n\nYou can browse and analyze job market data. New data uploads are managed by administrators.")
+        if not st.session_state.get('data_loaded', False):
+            st.warning("📁 No data available yet. Please contact an administrator to upload job market data.")
     
     with st.expander("📋 Expected JSON Format"):
-        st.markdown("Your JSON data should contain an array of job objects with the following structure:")
+        st.markdown("Job market data should contain an array of job objects with the following structure:")
         sample_json = {
             "companyLogoThumbUrl": "https://example.com/logo.jpg",
             "title": "Senior Data Engineer",
@@ -153,6 +176,7 @@ def display_welcome_screen():
 
 def display_analytics():
     """Display the main analytics dashboard."""
+    auth_manager = AuthManager()
     df = st.session_state.df
     processor = st.session_state.processor
     
@@ -236,8 +260,8 @@ def display_analytics():
             filtered_jobs = len(filtered_df) if not filtered_df.empty else 0
             st.info(f"Showing {filtered_jobs} of {total_jobs} jobs")
             
-            # Clear specific category
-            if selected_category != 'all':
+            # Clear specific category (admin only)
+            if auth_manager.is_admin() and selected_category != 'all':
                 if st.button(f"🗑️ Clear '{selected_category.title()}'", type="secondary"):
                     st.session_state.processor.clear_category_data(selected_category)
                     st.session_state.categories = st.session_state.processor.get_categories()
@@ -381,6 +405,10 @@ def display_analytics():
                 file_name=f"skills_analysis{category_suffix}.csv",
                 mime="text/csv"
             )
+    
+    # Show user role info
+    if not auth_manager.is_admin():
+        st.info("🗂️ **Viewing Mode:** You can explore all analytics and download data. Data management requires admin privileges.")
 
 if __name__ == "__main__":
     main()
