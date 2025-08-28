@@ -44,22 +44,23 @@ class AuthManager:
         pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         return re.match(pattern, email) is not None
     
-    def authenticate(self, username, password):
-        """Authenticate user with username and password."""
-        if username in st.session_state.users_db:
-            stored_password = st.session_state.users_db[username]['password']
-            if stored_password == self._hash_password(password):
-                user_data = st.session_state.users_db[username]
-                
-                # Check if email verification is required and user is not verified
-                if self.email_service.is_configured() and not user_data.get('email_verified', False):
-                    st.warning("⚠️ Twoje konto wymaga weryfikacji email. Sprawdź swoją skrzynkę pocztową.")
-                    return False
-                
-                st.session_state.authenticated = True
-                st.session_state.current_user = username
-                st.session_state.user_role = user_data['role']
-                return True
+    def authenticate(self, email, password):
+        """Authenticate user with email and password."""
+        # Find user by email
+        for username, user_data in st.session_state.users_db.items():
+            if user_data.get('email') == email:
+                stored_password = user_data['password']
+                if stored_password == self._hash_password(password):
+                    # Check if email verification is required and user is not verified
+                    if self.email_service.is_configured() and not user_data.get('email_verified', False):
+                        st.warning("⚠️ Twoje konto wymaga weryfikacji email. Sprawdź swoją skrzynkę pocztową.")
+                        return False
+                    
+                    st.session_state.authenticated = True
+                    st.session_state.current_user = username
+                    st.session_state.user_role = user_data['role']
+                    return True
+                break
         return False
     
     def logout(self):
@@ -202,7 +203,7 @@ def show_login_form():
             st.markdown("### Zaloguj się do SkillViz Analytics")
             
             with st.form("login_form"):
-                username = st.text_input("Nazwa użytkownika:")
+                email = st.text_input("Adres email:")
                 password = st.text_input("Hasło:", type="password")
                 
                 col1, col2 = st.columns(2)
@@ -210,18 +211,18 @@ def show_login_form():
                     login_submitted = st.form_submit_button("Zaloguj się", type="primary")
                 with col2:
                     if st.form_submit_button("Dane testowe"):
-                        st.info("**Użytkownik testowy:** testuser / test123")
-                        st.info("**Administrator:** skillviz / Skillviz^2")
+                        st.info("**Użytkownik testowy:** test@skillviz.com / test123")
+                        st.info("**Administrator:** admin@skillviz.com / Skillviz^2")
                 
                 if login_submitted:
-                    if username and password:
-                        if auth_manager.authenticate(username, password):
-                            st.success(f"✅ Witaj, {username}!")
+                    if email and password:
+                        if auth_manager.authenticate(email, password):
+                            st.success(f"✅ Witaj!")
                             st.rerun()
                         else:
-                            st.error("❌ Nieprawidłowa nazwa użytkownika lub hasło")
+                            st.error("❌ Nieprawidłowy email lub hasło")
                     else:
-                        st.warning("⚠️ Wprowadź nazwę użytkownika i hasło")
+                        st.warning("⚠️ Wprowadź email i hasło")
         
         with tab2:
             st.markdown("### Załóż nowe konto")
