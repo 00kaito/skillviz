@@ -15,6 +15,7 @@ class EmailLabsService:
         self.app_key = os.environ.get('EMAILLABS_APP_KEY', '')
         self.secret_key = os.environ.get('EMAILLABS_SECRET_KEY', '')
         self.from_email = os.environ.get('EMAILLABS_FROM_EMAIL', 'noreply@example.com')
+        # EmailLabs API base URL 
         self.base_url = "https://api.emaillabs.net.pl/api"
         
         # Initialize verification tokens storage in session state
@@ -55,13 +56,15 @@ class EmailLabsService:
         st.info(f"   - From Email: {self.from_email}")
         
         try:
-            url = f"{self.base_url}/send"
+            # EmailLabs API correct endpoint
+            url = "https://api.emaillabs.net.pl/api/send"
             
             headers = {
                 "Authorization": self._get_auth_header(),
                 "Content-Type": "application/x-www-form-urlencoded"
             }
             
+            # EmailLabs API expects different parameter names
             data = {
                 "to": to_email,
                 "from": self.from_email,
