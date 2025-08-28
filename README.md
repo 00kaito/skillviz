@@ -7,224 +7,329 @@ SkillViz Analytics to zaawansowana aplikacja webowa stworzona w Streamlit do ana
 ### 🔑 Kluczowe Funkcjonalności
 
 - **System Logowania**: Kompletny system uwierzytelniania z kontrolą dostępu opartą na rolach
+- **Tryb Gościa**: Dostęp do danych demonstracyjnych bez logowania (ograniczone do 50 wyników)
+- **Separacja Danych**: Oddzielne dane demo dla gości i prawdziwe dane dla zalogowanych użytkowników
 - **Zarządzanie Kategoriami**: Organizacja danych według kategorii zdefiniowanych przez użytkownika
 - **Wykrywanie Duplikatów**: Automatyczne unikanie duplikatów przy dodawaniu danych
 - **Analiza Trendów**: Analizy czasowe bazujące na datach publikacji ofert pracy
 - **Interaktywne Wizualizacje**: Wykresy i dashboard z filtrowaniem danych
-- **Export Danych**: Możliwość eksportu analiz w formacie CSV
+- **Interface Polski**: Pełne wsparcie języka polskiego
 
 ### 👥 Role Użytkowników
 
+- **Gość**: Dostęp do danych demo (50 ofert z justjoin.it) - tylko przeglądanie
 - **Administrator**: Pełny dostęp - upload danych, zarządzanie użytkownikami, wszystkie analizy
-- **Użytkownik**: Dostęp do przeglądania - analizy, wizualizacje, export danych
+- **Użytkownik**: Dostęp do przeglądania prawdziwych danych - analizy, wizualizacje, filtry
 
-## 📁 Struktura Plików
+## 🏗️ Architektura Techniczna
 
-### Główne Pliki
+### Stack Technologiczny
 
-| Plik | Opis |
-|------|------|
-| `app.py` | Główna aplikacja Streamlit - interfejs użytkownika i logika prezentacji |
-| `auth.py` | System uwierzytelniania i zarządzania użytkownikami |
-| `data_processor.py` | Klasa przetwarzania i analizy danych |
-| `visualizations.py` | Klasa tworzenia wykresów i wizualizacji |
-| `pyproject.toml` | Konfiguracja projektu i zależności |
-| `.streamlit/config.toml` | Konfiguracja serwera Streamlit |
+| Technologia | Wersja | Zastosowanie |
+|-------------|---------|--------------|
+| **Python** | 3.11+ | Backend, logika biznesowa |
+| **Streamlit** | Latest | Frontend, interfejs użytkownika |
+| **Pandas** | Latest | Przetwarzanie i analiza danych |
+| **Plotly** | Latest | Interaktywne wizualizacje |
+| **NumPy** | Latest | Obliczenia numeryczne |
 
-### Konfiguracja
+### Architektura Modułowa
 
 ```
-.streamlit/
-└── config.toml          # Konfiguracja serwera (port 5000, adres 0.0.0.0)
+SkillViz Analytics/
+├── app.py                    # Główny moduł aplikacji
+├── auth.py                   # System uwierzytelniania
+├── data_processor.py         # Przetwarzanie danych
+├── visualizations.py         # Generowanie wykresów
+├── .streamlit/
+│   └── config.toml          # Konfiguracja serwera
+├── attached_assets/         # Zasoby i dane demo
+└── README.md               # Dokumentacja
 ```
 
-## 🏗️ Architektura Klas i Funkcji
+### Separacja Danych
+
+#### Dane Demonstracyjne (Goście)
+- **Źródło**: Rzeczywiste oferty pracy z justjoin.it
+- **Rozmiar**: 50 ofert pracy (ograniczenie)
+- **Dostęp**: Automatyczny, bez logowania
+- **Kategoria**: `demo` 
+- **Storage**: `demo_df`, `demo_categories_data`
+
+#### Dane Prawdziwe (Administratorzy)
+- **Źródło**: JSON przesyłany przez administratorów
+- **Rozmiar**: Bez ograniczeń
+- **Dostęp**: Po uwierzytelnieniu
+- **Kategorie**: Definiowane przez użytkownika
+- **Storage**: `df`, `categories_data`
+
+## 📁 Struktura Plików i Kluczowe Klasy
 
 ### 1. `auth.py` - System Uwierzytelniania
 
 #### Klasa `AuthManager`
-- **`__init__()`**: Inicjalizuje bazę użytkowników z domyślnymi kontami
-- **`authenticate(username, password)`**: Uwierzytelnia użytkownika
-- **`register_user(username, password)`**: Rejestruje nowego użytkownika (tylko admin)
-- **`is_admin()`**: Sprawdza uprawnienia administratora
-- **`get_all_users()`**: Pobiera listę wszystkich użytkowników
-- **`delete_user(username)`**: Usuwa użytkownika (tylko admin)
+```python
+class AuthManager:
+    def __init__(self):
+        # Inicjalizuje bazę użytkowników z domyślnymi kontami
+        
+    def authenticate(username: str, password: str) -> bool:
+        # Uwierzytelnia użytkownika z hashowaniem SHA256
+        
+    def is_authenticated(self) -> bool:
+        # Sprawdza status logowania w sesji
+        
+    def is_admin(self) -> bool:
+        # Weryfikuje uprawnienia administratora
+        
+    def register_user(username: str, password: str) -> bool:
+        # Rejestruje nowego użytkownika (tylko admin)
+```
 
-#### Funkcje pomocnicze
-- **`show_login_form()`**: Wyświetla formularz logowania
-- **`show_user_management()`**: Panel zarządzania użytkownikami
-- **`show_auth_header()`**: Header z informacjami o użytkowniku
+**Funkcje pomocnicze:**
+- `show_login_form()`: Formularz logowania Streamlit
+- `show_user_management()`: Panel zarządzania użytkownikami
+- `show_auth_header()`: Header z informacjami o użytkowniku
 
 ### 2. `data_processor.py` - Przetwarzanie Danych
 
 #### Klasa `JobDataProcessor`
-- **`process_json_data(json_data, category, append_to_existing)`**: Główna funkcja przetwarzania danych JSON
-- **`get_data_by_category(category)`**: Filtruje dane według kategorii
-- **`get_skills_statistics(df)`**: Generuje statystyki umiejętności
-- **`get_skill_combinations(df)`**: Analizuje kombinacje umiejętności
-- **`get_skills_by_location(df)`**: Umiejętności według lokalizacji
-- **`clear_category_data(category)`**: Usuwa dane kategorii
-- **`_remove_duplicates(new_df, existing_df)`**: Wykrywa i usuwa duplikaty
-- **`_clean_data(df)`**: Czyści i normalizuje dane
+```python
+class JobDataProcessor:
+    def __init__(self):
+        self.df = None                      # Dane prawdziwe (admin)
+        self.demo_df = None                 # Dane demo (goście)
+        self.categories_data = {}           # Kategorie danych prawdziwych
+        self.demo_categories_data = {}      # Kategorie danych demo
+```
+
+**Kluczowe metody:**
+- `get_data(is_guest=False)`: Pobiera odpowiednie dane według typu użytkownika
+- `get_categories(is_guest=False)`: Lista kategorii dla typu użytkownika
+- `get_data_by_category(category, is_guest=False)`: Filtruje dane według kategorii i typu użytkownika
+- `process_json_data()`: Przetwarza nowe dane JSON (tylko admin)
+- `_initialize_demo_data()`: Ładuje dane demonstracyjne przy starcie
+- `has_demo_data()`, `has_real_data()`: Sprawdza dostępność danych
+
+**Funkcje analityczne:**
+- `get_skills_statistics(df)`: Statystyki umiejętności
+- `get_skill_combinations(df)`: Analizy kombinacji umiejętności
+- `get_skills_by_location(df)`: Umiejętności według lokalizacji
+- `get_market_summary(df)`: Podsumowanie rynku pracy
 
 ### 3. `visualizations.py` - Wizualizacje
 
 #### Klasa `JobMarketVisualizer`
-- **`create_skills_demand_chart(df, top_n)`**: Wykres zapotrzebowania na umiejętności
-- **`create_experience_distribution_chart(df)`**: Rozkład poziomów doświadczenia
-- **`create_city_distribution_chart(df, top_n)`**: Rozkład ofert według miast
-- **`create_top_companies_chart(df, top_n)`**: Top firmy rekrutujące
-- **`create_publishing_trends_chart(df)`**: Trendy publikacji w czasie
-- **`create_skills_trends_chart(df, top_skills)`**: Trendy umiejętności w czasie
-- **`create_experience_skills_heatmap(df, top_skills)`**: Mapa cieplna umiejętności vs doświadczenie
+```python
+class JobMarketVisualizer:
+    def __init__(self, df: pd.DataFrame):
+        # Inicjalizuje z DataFrame do wizualizacji
+```
+
+**Generatory wykresów:**
+- `create_skills_demand_chart(df, top_n=15)`: Wykres słupkowy zapotrzebowania na umiejętności
+- `create_experience_distribution_chart(df)`: Wykres kołowy poziomów doświadczenia  
+- `create_city_distribution_chart(df, top_n=10)`: Rozkład ofert według miast
+- `create_top_companies_chart(df, top_n=10)`: Top firmy rekrutujące
+- `create_publishing_trends_chart(df)`: Trendy publikacji w czasie
+- `create_skills_trends_chart(df, top_skills=5)`: Trendy umiejętności w czasie
+- `create_experience_skills_heatmap(df, top_skills=10)`: Mapa cieplna umiejętności vs doświadczenie
+- `create_workplace_type_chart(df)`: Analiza typu miejsca pracy
 
 ### 4. `app.py` - Główna Aplikacja
 
-#### Kluczowe Funkcje
-- **`main()`**: Główna funkcja aplikacji z kontrolą uwierzytelniania
-- **`process_data(json_data, category, append_to_existing)`**: Przetwarzanie przesłanych danych
-- **`display_analytics()`**: Wyświetla dashboard analityczny
-- **`display_welcome_screen()`**: Ekran powitalny z instrukcjami
-
-#### Struktura Interfejsu
-- **Sidebar**: Upload danych (admin) / informacje (użytkownik) + filtry
-- **Main Area**: 5 zakładek analitycznych + sekcja eksportu
-
-## 🚀 Instrukcja Uruchomienia
-
-### Wymagania
-- Python 3.11+
-- Dostęp do internetu (instalacja pakietów)
-
-### Instalacja i Uruchomienie
-
-1. **Klonowanie/Pobranie Projektu**
-   ```bash
-   # Jeśli używasz git
-   git clone <repository-url>
-   cd skillviz-analytics
-   ```
-
-2. **Instalacja Zależności**
-   ```bash
-   # Automatycznie zainstaluje wszystkie wymagane pakiety
-   pip install streamlit pandas plotly numpy
-   ```
-
-3. **Uruchomienie Aplikacji**
-   ```bash
-   streamlit run app.py --server.port 5000
-   ```
-
-4. **Dostęp do Aplikacji**
-   - Otwórz przeglądarkę i przejdź do: `http://localhost:5000`
-   - Aplikacja automatycznie przekieruje do strony logowania
-
-### Alternatywne Uruchomienie (dla Replit)
-```bash
-# Aplikacja automatycznie konfiguruje się na porcie 5000
-streamlit run app.py --server.port 5000 --server.address 0.0.0.0
+#### Architektura UI
+```
+Header: Uwierzytelnianie / Tryb Gościa
+├── Sidebar: Upload danych (Admin) | Filtry
+│   ├── Specjalizacja (kategorie)
+│   ├── Miasto  
+│   ├── Poziom doświadczenia
+│   └── Firma
+└── Main Area: 
+    ├── Metryki (oferty, umiejętności, miasta, firmy)
+    └── Zakładki analityczne (5)
+        ├── 📊 Skills Analysis
+        ├── 🎯 Experience Levels  
+        ├── 🌍 Location Analysis
+        ├── 🏢 Company Insights
+        └── 📈 Trends
 ```
 
-## 🔐 Dane Logowania
+**Kluczowe funkcje:**
+- `main()`: Główna funkcja z kontrolą uwierzytelniania i inicjalizacją sesji
+- `display_analytics()`: Dashboard analityczny z separacją danych
+- `display_welcome_screen()`: Ekran powitalny z instrukcjami
+- `process_data()`: Przetwarzanie uploadowanych danych (admin tylko)
 
-### Domyślne Konta
+## 🔧 Zarządzanie Danymi
 
-| Rola | Login | Hasło | Uprawnienia |
-|------|--------|-------|-------------|
-| Administrator | `skillviz` | `Skillviz^2` | Pełny dostęp + zarządzanie |
-| Użytkownik Testowy | `testuser` | `test123` | Tylko przeglądanie |
+### Lifecycle Danych
 
-### Tworzenie Nowych Kont
-1. Zaloguj się jako administrator
-2. Kliknij przycisk "👥 Users" w headerze
-3. Użyj sekcji "➕ Register New User"
-4. Wprowadź dane nowego użytkownika
+1. **Inicjalizacja**: Automatyczne ładowanie danych demo przy starcie
+2. **Upload Admin**: Przetwarzanie JSON → walidacja → normalizacja → kategoryzacja
+3. **Dostęp Gościa**: Automatyczny dostęp do danych demo (50 ofert)
+4. **Dostęp Użytkownika**: Dostęp do pełnych danych po uwierzytelnieniu
+5. **Filtrowanie**: Dynamiczne filtrowanie według kategorii, miasta, poziomu, firmy
 
-## 📖 Instrukcja Użytkowania
+### Format Danych JSON
 
-### Dla Administratorów
-
-1. **Logowanie**: Użyj danych administratora
-2. **Upload Danych**: 
-   - W sidebarze wybierz metodę (plik JSON lub wklej tekst)
-   - Wpisz kategorię (np. "Python", "Java")
-   - Zaznacz "Append to existing data" aby uniknąć duplikatów
-3. **Zarządzanie Danymi**:
-   - Przeglądaj dostępne kategorie
-   - Usuwaj niepotrzebne dane
-   - Zarządzaj kontami użytkowników
-
-### Dla Użytkowników
-
-1. **Logowanie**: Użyj przydzielonych danych
-2. **Analiza Danych**:
-   - Wybierz kategorię w sidebarze
-   - Zastosuj filtry (miasto, poziom doświadczenia, firma)
-   - Przeglądaj 5 zakładek analitycznych
-3. **Export**: Pobierz dane lub analizy w formacie CSV
-
-### Zakładki Analityczne
-
-| Zakładka | Zawartość |
-|----------|-----------|
-| 📊 Skills Analysis | Top umiejętności, statystyki, kombinacje |
-| 🎯 Experience Levels | Rozkład poziomów doświadczenia, mapa cieplna |
-| 🌍 Location Analysis | Analiza geograficzna, umiejętności według miast |
-| 🏢 Company Insights | Top firmy, analiza typu pracy (remote/office) |
-| 📈 Trends | Trendy publikacji i zapotrzebowania na umiejętności |
-
-## 📊 Format Danych
-
-### Wymagany Format JSON
 ```json
 [
   {
     "title": "Senior Data Engineer",
-    "companyName": "Example Company",
-    "city": "Warsaw",
+    "companyName": "Example Company", 
+    "city": "Warszawa",
     "experienceLevel": "senior",
     "workingTime": "full_time",
     "workplaceType": "remote",
     "remoteInterview": true,
-    "publishedAt": "2025-08-18T13:00:28.333Z",
+    "openToHireUkrainians": false,
+    "publishedAt": "2025-08-18T16:00:16.827Z",
     "requiredSkills": ["Python", "SQL", "Docker", "AWS"],
     "link": "https://example.com/job-offer"
   }
 ]
 ```
 
-### Wymagane Pola
-- `title`: Tytuł stanowiska
-- `companyName`: Nazwa firmy
-- `city`: Miasto
-- `experienceLevel`: Poziom doświadczenia (junior, mid, senior)
-- `requiredSkills`: Lista wymaganych umiejętności
-- `publishedAt`: Data publikacji (dla analiz trendów)
+**Wymagane pola:**
+- `title`, `companyName`, `city`, `experienceLevel`, `requiredSkills`
 
-## 🔧 Rozwiązywanie Problemów
+**Opcjonalne pola:**
+- `publishedAt` (dla analiz trendów), `workplaceType`, `remoteInterview`
 
-### Najczęstsze Problemy
+## 🚀 Instrukcja Developera
 
-1. **Błąd portu**: Upewnij się, że port 5000 jest wolny
-2. **Błąd JSON**: Sprawdź format przesyłanych danych
-3. **Brak danych**: Administrator musi najpierw przesłać dane
-4. **Problemy z logowaniem**: Sprawdź wielkość liter w haśle
+### Setup Środowiska
 
-### Logi i Debugowanie
-- Logi aplikacji wyświetlają się w terminalu
-- Błędy JSON są wyświetlane w interfejsie
-- Sprawdź konsolę przeglądarki dla błędów JavaScript
+```bash
+# 1. Klonowanie repozytorium
+git clone <repository-url>
+cd skillviz-analytics
 
-## 🤝 Wsparcie
+# 2. Instalacja zależności
+pip install streamlit pandas plotly numpy
 
-W przypadku problemów:
-1. Sprawdź logi w terminalu
-2. Upewnij się, że wszystkie pakiety są zainstalowane
-3. Zweryfikuj format danych JSON
-4. Sprawdź uprawnienia użytkownika
+# 3. Konfiguracja Streamlit (automatyczna)
+# .streamlit/config.toml zawiera:
+[server]
+headless = true
+address = "0.0.0.0" 
+port = 5000
+
+# 4. Uruchomienie
+streamlit run app.py --server.port 5000
+```
+
+### Kluczowe Wzorce Kodowania
+
+#### Separacja Danych
+```python
+# Pobieranie odpowiednich danych
+is_guest = not auth_manager.is_authenticated()
+data = processor.get_data(is_guest=is_guest)
+categories = processor.get_categories(is_guest=is_guest)
+```
+
+#### Zarządzanie Sesją Streamlit
+```python
+# Inicjalizacja z separacją danych
+if 'data_loaded' not in st.session_state:
+    st.session_state.processor = JobDataProcessor()
+    current_data = st.session_state.processor.get_data(is_guest=is_guest)
+```
+
+#### Filtrowanie UI
+```python
+# Wyłączanie filtrów dla gości
+if auth_manager.is_authenticated():
+    selected_city = st.selectbox("Miasto:", cities)
+else:
+    selected_city = st.selectbox("Miasto:", ['All'], disabled=True, 
+                                help="Zaloguj się aby filtrować")
+```
+
+### Rozszerzanie Aplikacji
+
+#### Dodawanie Nowych Wizualizacji
+1. Dodaj metodę do `JobMarketVisualizer`
+2. Wykorzystaj Plotly dla spójności
+3. Uwzględnij separację danych (demo vs real)
+4. Dodaj do odpowiedniej zakładki w `display_analytics()`
+
+#### Dodawanie Nowych Filtrów
+1. Rozszerz logikę w `display_analytics()`
+2. Dodaj kontrolki UI w sidebar
+3. Zastosuj filtr do `display_df`
+4. Uwzględnij ograniczenia dla gości
+
+## 🔐 Dane Logowania
+
+### Domyślne Konta
+
+| Rola | Login | Hasło | Opis |
+|------|--------|-------|------|
+| **Administrator** | `skillviz` | `Skillviz^2` | Pełny dostęp + zarządzanie |
+| **Użytkownik Testowy** | `testuser` | `test123` | Tylko prawdziwe dane |
+| **Gość** | - | - | Automatyczny dostęp do danych demo |
+
+### Zarządzanie Użytkownikami
+- Admin może tworzyć nowe konta przez panel "👥 Users"
+- Hasła są hashowane SHA256 + sól
+- Sesje są zarządzane przez Streamlit session_state
+
+## 🔍 Monitoring i Debugging
+
+### Logi Aplikacji
+- Błędy wyświetlane w interfejsie Streamlit
+- Logi systemowe w terminalu
+- Walidacja JSON z komunikatami błędów
+
+### Metryki Wydajności
+- Czas ładowania danych
+- Rozmiar przetwarzanych DataFrame
+- Status separacji danych (demo vs real)
+
+### Typowe Problemy
+1. **Port zajęty**: Zmień port w config.toml lub użyj `--server.port`
+2. **Błędy JSON**: Sprawdź strukturę i wymagane pola  
+3. **Brak danych**: Upewnij się, że demo data się załadowała
+4. **Problemy z logowaniem**: Sprawdź wielkość liter, sesja Streamlit
+
+## 🔬 Testowanie
+
+### Testowanie Funkcjonalności
+1. **Tryb Gościa**: Sprawdź automatyczne ładowanie danych demo
+2. **Logowanie**: Przetestuj różne role użytkowników
+3. **Upload**: Sprawdź walidację i przetwarzanie JSON
+4. **Filtry**: Przetestuj wszystkie kombinacje filtrów
+5. **Wizualizacje**: Sprawdź poprawność wykresów
+
+### Test Cases
+- Upload danych z różnymi kategoriami
+- Logowanie z nieprawidłowymi danymi  
+- Przejście gość → użytkownik → admin
+- Filtry z pustymi wynikami
+- JSON z brakującymi polami
+
+## 🤝 Wsparcie i Rozwój
+
+### Kontakt
+- Sprawdź logi w terminalu dla błędów technicznych
+- Upewnij się, że wszystkie pakiety są zainstalowane
+- Zweryfikuj format danych JSON
+- Przetestuj różne role użytkowników
+
+### Roadmap
+- [ ] Dodatkowe filtry zaawansowane
+- [ ] Eksport wykresów jako obrazy
+- [ ] API endpoint dla integracji
+- [ ] Wsparcie dla innych formatów danych
+- [ ] Zaawansowane analizy ML
 
 ---
 
-**Wersja**: 1.0.0  
-**Ostatnia aktualizacja**: Sierpień 2025
+**Wersja**: 2.0.0  
+**Ostatnia aktualizacja**: Sierpień 2025  
+**Licencja**: MIT  
+**Środowisko**: Python 3.11+ | Streamlit | Replit

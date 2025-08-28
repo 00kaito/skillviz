@@ -8,11 +8,13 @@ class JobDataProcessor:
     """Class for processing and analyzing job market data."""
     
     def __init__(self):
-        self.df = None
-        self.categories_data = {}  # Store data by categories
-        self._initialize_sample_data()  # Add sample data for guest users
+        self.df = None  # Real admin data
+        self.demo_df = None  # Demo data for guests
+        self.categories_data = {}  # Store real data by categories
+        self.demo_categories_data = {}  # Store demo data by categories
+        self._initialize_demo_data()  # Add demo data for guest users
     
-    def _initialize_sample_data(self):
+    def _initialize_demo_data(self):
         """Initialize sample data for guest users."""
         import pandas as pd
         import json
@@ -141,8 +143,8 @@ class JobDataProcessor:
             df['category'] = 'guest_data'
             df['upload_timestamp'] = pd.Timestamp.now()
             
-            self.df = df
-            self.categories_data['guest_data'] = df.copy()
+            self.demo_df = df
+            self.demo_categories_data['demo'] = df.copy()
         except Exception:
             # If sample data fails, continue with empty data
             pass
@@ -410,20 +412,48 @@ class JobDataProcessor:
         
         return summary
     
-    def get_categories(self):
-        """Get all available categories."""
-        return list(self.categories_data.keys())
-    
-    def get_data_by_category(self, category=None):
-        """Get data filtered by category."""
-        if category is None or category == 'all':
-            return self.df
-        
-        category_key = category.lower().strip()
-        if category_key in self.categories_data:
-            return self.categories_data[category_key]
+    def get_data(self, is_guest=False):
+        """Get appropriate data based on user type."""
+        if is_guest:
+            return self.demo_df if self.demo_df is not None else pd.DataFrame()
         else:
-            return pd.DataFrame()
+            return self.df if self.df is not None else pd.DataFrame()
+    
+    def get_categories(self, is_guest=False):
+        """Get all available categories based on user type."""
+        if is_guest:
+            return list(self.demo_categories_data.keys())
+        else:
+            return list(self.categories_data.keys())
+    
+    def has_demo_data(self):
+        """Check if demo data is available."""
+        return self.demo_df is not None and not self.demo_df.empty
+    
+    def has_real_data(self):
+        """Check if real admin data is available."""
+        return self.df is not None and not self.df.empty
+    
+    def get_data_by_category(self, category=None, is_guest=False):
+        """Get data filtered by category based on user type."""
+        if is_guest:
+            if category is None or category == 'all':
+                return self.demo_df if self.demo_df is not None else pd.DataFrame()
+            
+            category_key = category.lower().strip()
+            if category_key in self.demo_categories_data:
+                return self.demo_categories_data[category_key]
+            else:
+                return pd.DataFrame()
+        else:
+            if category is None or category == 'all':
+                return self.df if self.df is not None else pd.DataFrame()
+            
+            category_key = category.lower().strip()
+            if category_key in self.categories_data:
+                return self.categories_data[category_key]
+            else:
+                return pd.DataFrame()
     
     def clear_category_data(self, category=None):
         """Clear data for specific category or all data."""

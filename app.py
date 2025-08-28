@@ -44,11 +44,15 @@ def main():
     # Initialize session state
     if 'data_loaded' not in st.session_state:
         st.session_state.processor = JobDataProcessor()
-        # Check if processor has guest data
-        if st.session_state.processor.df is not None and not st.session_state.processor.df.empty:
+        
+        # Get appropriate data based on authentication status
+        is_guest = not auth_manager.is_authenticated()
+        current_data = st.session_state.processor.get_data(is_guest=is_guest)
+        
+        if not current_data.empty:
             st.session_state.data_loaded = True
-            st.session_state.df = st.session_state.processor.df
-            st.session_state.categories = st.session_state.processor.get_categories()
+            st.session_state.df = current_data
+            st.session_state.categories = st.session_state.processor.get_categories(is_guest=is_guest)
             st.session_state.visualizer = JobMarketVisualizer(st.session_state.df)
         else:
             st.session_state.data_loaded = False
@@ -207,15 +211,16 @@ def display_analytics():
     df = st.session_state.df
     processor = st.session_state.processor
     
+    # Get appropriate data based on authentication status
+    is_guest = not auth_manager.is_authenticated()
+    
     # Get filtered data based on selected category
     if st.session_state.selected_category == 'all':
-        display_df = df.copy() if df is not None else pd.DataFrame()
+        display_df = processor.get_data(is_guest=is_guest)
     else:
-        display_df = processor.get_data_by_category(st.session_state.selected_category)
+        display_df = processor.get_data_by_category(st.session_state.selected_category, is_guest=is_guest)
     
-    # Apply guest limitations
-    if not auth_manager.is_authenticated() and not display_df.empty:
-        display_df = display_df.head(50)
+    # Guest data is already limited in the processor, no need to apply additional limits here
     
     # Create visualizer with filtered data
     if not display_df.empty:
@@ -446,45 +451,18 @@ def display_analytics():
         for key, value in summary_stats.items():
             st.write(f"**{key}:** {value}")
     
-    # Export functionality
-    st.divider()
-    st.subheader("📥 Eksport Danych")
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        if st.button("Pobierz Przefiltrowane Dane jako CSV"):
-            csv = display_df.to_csv(index=False)
-            category_suffix = f"_{st.session_state.selected_category}" if st.session_state.selected_category != 'all' else ""
-            st.download_button(
-                label="Pobierz CSV",
-                data=csv,
-                file_name=f"job_market_data{category_suffix}.csv",
-                mime="text/csv"
-            )
-    
-    with col2:
-        if st.button("Pobierz Analizę Umiejętności"):
-            skills_stats = processor.get_skills_statistics(display_df)
-            skills_csv = skills_stats.to_csv()
-            category_suffix = f"_{st.session_state.selected_category}" if st.session_state.selected_category != 'all' else ""
-            st.download_button(
-                label="Pobierz CSV Umiejętności",
-                data=skills_csv,
-                file_name=f"skills_analysis{category_suffix}.csv",
-                mime="text/csv"
-            )
     
     # Show user role info
     if not auth_manager.is_authenticated():
         col1, col2 = st.columns(2)
         with col1:
-            st.info("🔍 **Tryb Gościa**: Możesz przeglądać ograniczone analizy i pobierać dane (limit 50 wyników).")
+            st.info("🔍 **Tryb Gościa**: Możesz przeglądać ograniczone analizy (limit 50 wyników).")
         with col2:
             if st.button("🔐 Zaloguj się dla pełnego dostępu"):
                 st.session_state.show_login = True
                 st.rerun()
     elif not auth_manager.is_admin():
-        st.info("🗂️ **Tryb Przeglądania**: Możesz eksplorować wszystkie analizy i pobierać dane. Zarządzanie danymi wymaga uprawnień administratora.")
+        st.info("🗂️ **Tryb Przeglądania**: Możesz eksplorować wszystkie analizy. Zarządzanie danymi wymaga uprawnień administratora.")
 
 if __name__ == "__main__":
     main()
