@@ -43,11 +43,18 @@ def main():
     
     # Initialize session state
     if 'data_loaded' not in st.session_state:
-        st.session_state.data_loaded = False
-        st.session_state.df = None
         st.session_state.processor = JobDataProcessor()
-        st.session_state.visualizer = None
-        st.session_state.categories = []
+        # Check if processor has guest data
+        if st.session_state.processor.df is not None and not st.session_state.processor.df.empty:
+            st.session_state.data_loaded = True
+            st.session_state.df = st.session_state.processor.df
+            st.session_state.categories = st.session_state.processor.get_categories()
+            st.session_state.visualizer = JobMarketVisualizer(st.session_state.df)
+        else:
+            st.session_state.data_loaded = False
+            st.session_state.df = None
+            st.session_state.categories = []
+            st.session_state.visualizer = None
         st.session_state.selected_category = 'all'
         st.session_state.append_mode = True
     
@@ -222,7 +229,7 @@ def display_analytics():
     total_jobs = len(display_df) if not display_df.empty else 0
     
     with col1:
-        st.metric("Total Jobs", total_jobs)
+        st.metric("Łączna liczba ofert", total_jobs)
     with col2:
         if not display_df.empty:
             all_skills = []
@@ -231,13 +238,13 @@ def display_analytics():
             unique_skills = len(set(all_skills))
         else:
             unique_skills = 0
-        st.metric("Unique Skills", unique_skills)
+        st.metric("Unikalne umiejętności", unique_skills)
     with col3:
         cities_count = display_df['city'].nunique() if not display_df.empty else 0
-        st.metric("Cities", cities_count)
+        st.metric("Miasta", cities_count)
     with col4:
         companies_count = display_df['companyName'].nunique() if not display_df.empty else 0
-        st.metric("Companies", companies_count)
+        st.metric("Firmy", companies_count)
     
     st.divider()
     
@@ -245,7 +252,7 @@ def display_analytics():
     with st.sidebar:
         if st.session_state.data_loaded:
             st.divider()
-            st.header("🔍 Filters")
+            st.header("🔍 Filtry")
             
             # Category filter
             category_options = ['all'] + st.session_state.categories
@@ -438,27 +445,27 @@ def display_analytics():
     
     # Export functionality
     st.divider()
-    st.subheader("📥 Export Data")
+    st.subheader("📥 Eksport Danych")
     col1, col2 = st.columns(2)
     
     with col1:
-        if st.button("Download Filtered Data as CSV"):
+        if st.button("Pobierz Przefiltrowane Dane jako CSV"):
             csv = display_df.to_csv(index=False)
             category_suffix = f"_{st.session_state.selected_category}" if st.session_state.selected_category != 'all' else ""
             st.download_button(
-                label="Download CSV",
+                label="Pobierz CSV",
                 data=csv,
                 file_name=f"job_market_data{category_suffix}.csv",
                 mime="text/csv"
             )
     
     with col2:
-        if st.button("Download Skills Analysis"):
+        if st.button("Pobierz Analizę Umiejętności"):
             skills_stats = processor.get_skills_statistics(display_df)
             skills_csv = skills_stats.to_csv()
             category_suffix = f"_{st.session_state.selected_category}" if st.session_state.selected_category != 'all' else ""
             st.download_button(
-                label="Download Skills CSV",
+                label="Pobierz CSV Umiejętności",
                 data=skills_csv,
                 file_name=f"skills_analysis{category_suffix}.csv",
                 mime="text/csv"

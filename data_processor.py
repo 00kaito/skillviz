@@ -15,99 +15,134 @@ class JobDataProcessor:
     def _initialize_sample_data(self):
         """Initialize sample data for guest users."""
         import pandas as pd
-        from datetime import datetime, timedelta
-        import random
+        import json
         
-        # Sample job data for guests
-        sample_jobs = [
-            {
-                "title": "Senior Python Developer",
-                "companyName": "TechCorp",
-                "city": "Warsaw",
-                "experienceLevel": "senior",
-                "workingTime": "full_time",
-                "workplaceType": "remote",
-                "publishedAt": "2025-08-20T10:00:00.000Z",
-                "requiredSkills": ["Python", "Django", "PostgreSQL", "Docker"]
-            },
-            {
-                "title": "Frontend Developer",
-                "companyName": "WebStudio",
-                "city": "Krakow",
-                "experienceLevel": "mid",
-                "workingTime": "full_time",
-                "workplaceType": "hybrid",
-                "publishedAt": "2025-08-19T14:30:00.000Z",
-                "requiredSkills": ["JavaScript", "React", "TypeScript", "CSS"]
-            },
-            {
-                "title": "Data Engineer",
-                "companyName": "DataLab",
-                "city": "Gdansk",
-                "experienceLevel": "senior",
-                "workingTime": "full_time",
-                "workplaceType": "remote",
-                "publishedAt": "2025-08-18T09:15:00.000Z",
-                "requiredSkills": ["Python", "Apache Spark", "SQL", "AWS"]
-            },
-            {
-                "title": "Java Developer",
-                "companyName": "Enterprise Solutions",
-                "city": "Warsaw",
-                "experienceLevel": "mid",
-                "workingTime": "full_time",
-                "workplaceType": "office",
-                "publishedAt": "2025-08-21T11:45:00.000Z",
-                "requiredSkills": ["Java", "Spring Boot", "MySQL", "Kubernetes"]
-            },
-            {
-                "title": "DevOps Engineer",
-                "companyName": "CloudTech",
-                "city": "Wroclaw",
-                "experienceLevel": "senior",
-                "workingTime": "full_time",
-                "workplaceType": "remote",
-                "publishedAt": "2025-08-17T16:20:00.000Z",
-                "requiredSkills": ["Docker", "Kubernetes", "AWS", "Terraform"]
-            }
-        ]
-        
-        # Generate more sample data
-        cities = ["Warsaw", "Krakow", "Gdansk", "Wroclaw", "Poznan", "Katowice"]
-        companies = ["TechCorp", "WebStudio", "DataLab", "Enterprise Solutions", "CloudTech", "InnovateIT", "SoftwarePlus", "DevCompany"]
-        levels = ["junior", "mid", "senior"]
-        skills_sets = [
-            ["Python", "Django", "FastAPI", "PostgreSQL"],
-            ["JavaScript", "React", "Node.js", "MongoDB"],
-            ["Java", "Spring Boot", "Hibernate", "MySQL"],
-            ["TypeScript", "Angular", "RxJS", "Firebase"],
-            ["C#", ".NET", "Entity Framework", "SQL Server"],
-            ["Go", "Gin", "Redis", "Docker"],
-            ["PHP", "Laravel", "Vue.js", "MariaDB"]
-        ]
-        
-        base_date = datetime(2025, 8, 15)
-        for i in range(45):  # Generate 45 more jobs to reach 50 total
-            sample_jobs.append({
-                "title": f"{random.choice(['Senior', 'Mid-level', 'Junior'])} {random.choice(['Backend', 'Frontend', 'Fullstack'])} Developer",
-                "companyName": random.choice(companies),
-                "city": random.choice(cities),
-                "experienceLevel": random.choice(levels),
-                "workingTime": "full_time",
-                "workplaceType": random.choice(["remote", "hybrid", "office"]),
-                "publishedAt": (base_date + timedelta(days=random.randint(0, 10))).isoformat() + "Z",
-                "requiredSkills": random.choice(skills_sets) + [random.choice(["Git", "Docker", "Linux", "API"])]
-            })
+        # Real job data from justjoin.it for guest users
+        sample_jobs_json = """[
+  {
+    "companyLogoThumbUrl": "https://imgproxy.justjoinit.tech/bFGNTASeWwjwkqRg_RQp1jBciVPTsqxPRhdbFhUWXdQ/h:200/w:200/plain/https://public.justjoin.it/companies/logos/original/b637586175130bac310e3bc341cb8f467b51cb47.png",
+    "title": "Software Architect - Retention Engineering",
+    "companyName": "LeoVegas Group",
+    "city": "Warszawa",
+    "experienceLevel": "senior",
+    "workingTime": "full_time",
+    "workplaceType": "hybrid",
+    "remoteInterview": true,
+    "openToHireUkrainians": false,
+    "publishedAt": "2025-08-18T16:00:16.827Z",
+    "requiredSkills": [
+      "Java",
+      "Spring",
+      "Microservices",
+      "Event-Driven Architecture",
+      "Kotlin"
+    ],
+    "link": "https://justjoin.it/job-offer/leovegas-group-software-architect---retention-engineering-warszawa-architecture"
+  },
+  {
+    "companyLogoThumbUrl": "https://imgproxy.justjoinit.tech/a6AwdH0Kg2092hlDOy6Ft79KiueBiPVq4q3u5xlJoH4/h:200/w:200/plain/https://public.justjoin.it/companies/logos/original/d8ad9cb44be0ed13e5fbba3e3d5fed23f11df5bd.png",
+    "title": "Senior Java Developer (Remote)",
+    "companyName": "Caspian One",
+    "city": "Warszawa",
+    "experienceLevel": "senior",
+    "workingTime": "full_time",
+    "workplaceType": "remote",
+    "remoteInterview": true,
+    "openToHireUkrainians": true,
+    "publishedAt": "2025-08-18T16:00:16.827Z",
+    "requiredSkills": [
+      "Spring Boot",
+      "Multi-threading",
+      "Java",
+      "Concurrency"
+    ],
+    "link": "https://justjoin.it/job-offer/caspian-one-senior-java-developer-remote--warszawa-java"
+  },
+  {
+    "companyLogoThumbUrl": "https://imgproxy.justjoinit.tech/BzWgyxi50NEVw8vVhCjtH0e1OtZow3scOIpr5d1O1qQ/h:200/w:200/plain/https://public.justjoin.it/companies/logos/original/b6fd52b7d3d170271a3d77ac5cc99a1212236ce3.jpg",
+    "title": "Frontend Developer (Angular + React)",
+    "companyName": "emagine Polska",
+    "city": "Warszawa",
+    "experienceLevel": "senior",
+    "workingTime": "full_time",
+    "workplaceType": "remote",
+    "remoteInterview": true,
+    "openToHireUkrainians": false,
+    "publishedAt": "2025-08-18T16:00:16.827Z",
+    "requiredSkills": [
+      "JavaScript",
+      "React",
+      "Angular",
+      "TypeScript",
+      "AWS"
+    ],
+    "link": "https://justjoin.it/job-offer/emagine-polska-frontend-developer-angular-react--warszawa-javascript"
+  },
+  {
+    "companyLogoThumbUrl": "https://imgproxy.justjoinit.tech/OAngGJ1FOa5x3uuFmt9RcjwMSApQe_mgE1iwT8H1Tg4/h:200/w:200/plain/https://s3.eu-west-1.amazonaws.com/images.justjoin.it/justjoinit/company-logos/ff873b2e-f897-4406-8d45-3906b0f5caec.png",
+    "title": "SAP MM Stream Lead",
+    "companyName": "Kevin Edward",
+    "city": "Warszawa",
+    "experienceLevel": "senior",
+    "workingTime": "full_time",
+    "workplaceType": "remote",
+    "remoteInterview": false,
+    "openToHireUkrainians": true,
+    "publishedAt": "2025-08-18T16:00:16.827Z",
+    "requiredSkills": [
+      "SAP MM",
+      "SAP EWM",
+      "SAP TM",
+      "Agile",
+      "Ariba",
+      "S4 Transformation",
+      "integration"
+    ],
+    "link": "https://justjoin.it/job-offer/kevin-edward-sap-mm-stream-lead-warszawa-erp"
+  },
+  {
+    "companyLogoThumbUrl": "https://imgproxy.justjoinit.tech/-hapeh8uotd9bVuXYLJp_xjt66lo52D5QBbuUFcZ3vc/h:200/w:200/plain/https://s3.eu-west-1.amazonaws.com/images.justjoin.it/justjoinit/company-logos/eed96226-ad41-4665-9907-df18d8dd991e.png",
+    "title": "SAP PP Stream Lead",
+    "companyName": "Kevin Edward",
+    "city": "Warszawa",
+    "experienceLevel": "senior",
+    "workingTime": "full_time",
+    "workplaceType": "remote",
+    "remoteInterview": false,
+    "openToHireUkrainians": true,
+    "publishedAt": "2025-08-18T16:00:16.827Z",
+    "requiredSkills": [
+      "SAP PP",
+      "S/4 Transformations",
+      "integration",
+      "Agile",
+      "Signavio",
+      "Celonis"
+    ],
+    "link": "https://justjoin.it/job-offer/kevin-edward-sap-pp-stream-lead-warszawa-erp"
+  }]"""
         
         # Process sample data
         try:
+            # Load from the attached file if available, otherwise use inline data
+            try:
+                with open('attached_assets/Pasted--companyLogoThumbUrl-https-imgproxy-justjoinit-tech-bFGNTASeWwjwkqRg-RQp1jBciVPTsqx-1756343982663_1756343982665.txt', 'r', encoding='utf-8') as f:
+                    content = f.read()
+                sample_jobs = json.loads(content)
+            except:
+                # Fallback to inline sample data
+                sample_jobs = json.loads(sample_jobs_json)
+            
+            # Limit to 50 results for guest users
+            sample_jobs = sample_jobs[:50]
+            
             df = pd.DataFrame(sample_jobs)
             df = self._clean_data(df)
-            df['category'] = 'sample'
+            df['category'] = 'guest_data'
             df['upload_timestamp'] = pd.Timestamp.now()
             
             self.df = df
-            self.categories_data['sample'] = df.copy()
+            self.categories_data['guest_data'] = df.copy()
         except Exception:
             # If sample data fails, continue with empty data
             pass
