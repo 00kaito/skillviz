@@ -25,17 +25,26 @@ def apply_date_filter(df, date_range):
         if filtered_df.empty:
             return df  # Return original if no valid dates
         
-        # Calculate date thresholds
-        now = datetime.now()
+        # Calculate date thresholds - handle timezone issues
+        now = pd.Timestamp.now()
         
         if date_range == 'last_month':
-            threshold = now - timedelta(days=30)
+            threshold = now - pd.Timedelta(days=30)
         elif date_range == 'last_quarter':
-            threshold = now - timedelta(days=90)
+            threshold = now - pd.Timedelta(days=90)
         elif date_range == 'last_year':
-            threshold = now - timedelta(days=365)
+            threshold = now - pd.Timedelta(days=365)
         else:
             return filtered_df  # Return all data for 'all' or unknown ranges
+        
+        # Ensure both timestamps are timezone-naive for comparison
+        if filtered_df['publishedAt'].dt.tz is not None:
+            # If publishedAt has timezone, convert to local time and make naive
+            filtered_df['publishedAt'] = filtered_df['publishedAt'].dt.tz_convert(None)
+        
+        if threshold.tz is not None:
+            # If threshold has timezone, make it naive
+            threshold = threshold.tz_localize(None)
         
         # Filter by date
         filtered_df = filtered_df[filtered_df['publishedAt'] >= threshold]
