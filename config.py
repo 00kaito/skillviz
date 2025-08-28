@@ -13,8 +13,8 @@ def setup_page_config():
 
 def setup_app_title():
     """Set up main application title and description."""
-    st.title("📊 SkillViz Analytics for Engineers")
-    st.markdown("### Analyze skill requirements, experience levels, and location-based hiring trends")
+    st.title("📊 SkillViz Analytics dla Inżynierów")
+    st.markdown("### Analizuj wymagania umiejętności, poziomy doświadczenia i trendy zatrudnienia według lokalizacji")
 
 # Application constants
 GUEST_DATA_LIMIT = 50

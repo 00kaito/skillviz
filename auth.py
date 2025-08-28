@@ -177,19 +177,19 @@ class AuthManager:
     def delete_user(self, username):
         """Delete user (admin only, cannot delete self)."""
         if not self.is_admin():
-            return False, "Access denied"
+            return False, "Brak dostępu"
         
         if username == st.session_state.current_user:
-            return False, "Cannot delete your own account"
+            return False, "Nie można usunąć własnego konta"
         
         if username == 'skillviz':
-            return False, "Cannot delete main admin account"
+            return False, "Nie można usunąć głównego konta administratora"
         
         if username in st.session_state.users_db:
             del st.session_state.users_db[username]
-            return True, "User deleted successfully"
+            return True, "Użytkownik usunięty pomyślnie"
         
-        return False, "User not found"
+        return False, "Użytkownik nie znaleziony"
 
 def show_login_form():
     """Display login/register form with tabs."""
@@ -364,15 +364,15 @@ def show_auth_header():
         
         with col1:
             role_emoji = "👑" if auth_manager.is_admin() else "👤"
-            st.write(f"{role_emoji} Welcome, **{auth_manager.get_current_user()}** ({st.session_state.user_role})")
+            st.write(f"{role_emoji} Witaj, **{auth_manager.get_current_user()}** ({st.session_state.user_role})")
         
         with col2:
             if auth_manager.is_admin():
-                if st.button("👥 Users"):
+                if st.button("👥 Użytkownicy"):
                     st.session_state.show_user_management = not st.session_state.get('show_user_management', False)
         
         with col3:
-            if st.button("🚪 Logout"):
+            if st.button("🚪 Wyloguj"):
                 auth_manager.logout()
                 st.rerun()
         

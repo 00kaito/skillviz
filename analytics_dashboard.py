@@ -58,11 +58,11 @@ def display_analytics():
 def show_analytics_tabs(display_df, visualizer, processor):
     """Show the main analytics tabs."""
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "📊 Skills Analysis", 
-        "🎯 Experience Levels", 
-        "🌍 Location Analysis", 
-        "🏢 Company Insights", 
-        "📈 Trends"
+        "📊 Analiza Umiejętności", 
+        "🎯 Poziomy Doświadczenia", 
+        "🌍 Analiza Lokalizacji", 
+        "🏢 Analiza Firm", 
+        "📈 Trendy Rynkowe"
     ])
     
     with tab1:
@@ -82,7 +82,7 @@ def show_analytics_tabs(display_df, visualizer, processor):
 
 def show_skills_analysis(display_df, visualizer, processor):
     """Show skills analysis tab content."""
-    st.header("Skills Analysis")
+    st.header("Analiza Umiejętności")
     
     col1, col2 = st.columns([2, 1])
     with col1:
@@ -94,20 +94,20 @@ def show_skills_analysis(display_df, visualizer, processor):
     with col2:
         # Skills statistics
         skills_stats = processor.get_skills_statistics(display_df)
-        st.subheader("Skills Statistics")
+        st.subheader("Statystyki Umiejętności")
         for skill, count in skills_stats.head(10).items():
             percentage = (count / len(display_df)) * 100 if len(display_df) > 0 else 0
-            st.metric(skill, f"{count} jobs", f"{percentage:.1f}%")
+            st.metric(skill, f"{count} ofert", f"{percentage:.1f}%")
     
     # Skill combinations
-    st.subheader("Most Common Skill Combinations")
+    st.subheader("Najczęstsze Kombinacje Umiejętności")
     combinations = processor.get_skill_combinations(display_df)
     if not combinations.empty:
         st.dataframe(combinations.head(15), width='stretch')
 
 def show_experience_analysis(display_df, visualizer):
     """Show experience level analysis tab content."""
-    st.header("Experience Level Analysis")
+    st.header("Analiza Poziomów Doświadczenia")
     
     col1, col2 = st.columns(2)
     with col1:
@@ -122,7 +122,7 @@ def show_experience_analysis(display_df, visualizer):
 
 def show_location_analysis(display_df, visualizer, processor):
     """Show location analysis tab content."""
-    st.header("Location-Based Analysis")
+    st.header("Analiza Według Lokalizacji")
     
     # City job distribution
     if visualizer:
@@ -130,14 +130,14 @@ def show_location_analysis(display_df, visualizer, processor):
         st.plotly_chart(fig_cities, width='stretch')
     
     # Skills by city
-    st.subheader("Top Skills by City")
+    st.subheader("Najważniejsze Umiejętności w Miastach")
     city_skills = processor.get_skills_by_location(display_df)
     if not city_skills.empty:
         st.dataframe(city_skills, width='stretch')
 
 def show_company_analysis(display_df, visualizer):
     """Show company insights tab content."""
-    st.header("Company Insights")
+    st.header("Analiza Firm")
     
     col1, col2 = st.columns(2)
     with col1:
@@ -154,7 +154,7 @@ def show_company_analysis(display_df, visualizer):
 
 def show_trends_analysis(display_df, visualizer, processor):
     """Show market trends tab content."""
-    st.header("Market Trends")
+    st.header("Trendy Rynkowe")
     
     # Publishing trends over time
     if visualizer and 'publishedAt' in display_df.columns:
@@ -162,13 +162,13 @@ def show_trends_analysis(display_df, visualizer, processor):
         st.plotly_chart(fig_trends, width='stretch')
     
     # Skills trends over time
-    st.subheader("Skills Demand Over Time")
+    st.subheader("Zapotrzebowanie na Umiejętności w Czasie")
     if visualizer and 'publishedAt' in display_df.columns:
         fig_skills_trends = visualizer.create_skills_trends_chart(display_df)
         st.plotly_chart(fig_skills_trends, width='stretch')
     
     # Market summary
-    st.subheader("Market Summary")
+    st.subheader("Podsumowanie Rynku")
     summary_stats = processor.get_market_summary(display_df)
     
     for key, value in summary_stats.items():

@@ -28,26 +28,26 @@ def show_login_section():
 
 def show_admin_data_input():
     """Show admin data input section in sidebar."""
-    st.header("📂 Data Input (Admin Only)")
+    st.header("📂 Wprowadzanie Danych (Tylko Admin)")
     
     # Category input
-    st.subheader("🏷️ Category Management")
-    category = st.text_input("Enter category for upload:", placeholder="e.g., Java, Python, Data Science")
+    st.subheader("🏷️ Zarządzanie Kategoriami")
+    category = st.text_input("Wprowadź kategorię dla przesyłanych danych:", placeholder="np. Java, Python, Data Science")
     
     # Upload mode selection
-    append_mode = st.checkbox("Append to existing data (avoid duplicates)", value=st.session_state.append_mode)
+    append_mode = st.checkbox("Dodaj do istniejących danych (unikaj duplikatów)", value=st.session_state.append_mode)
     st.session_state.append_mode = append_mode
     
     # Data input options
-    input_method = st.radio("Choose input method:", ["Upload JSON file", "Paste JSON data"])
+    input_method = st.radio("Wybierz metodę wprowadzania:", ["Prześlij plik JSON", "Wklej dane JSON"])
     
-    if input_method == "Upload JSON file":
-        uploaded_file = st.file_uploader("Upload job data JSON file", type=['json'])
+    if input_method == "Prześlij plik JSON":
+        uploaded_file = st.file_uploader("Prześlij plik JSON z danymi o ofertach pracy", type=['json'])
         if uploaded_file is not None:
             handle_file_upload(uploaded_file, category, append_mode)
     else:
-        json_text = st.text_area("Paste JSON data here:", height=200)
-        if st.button("Load Data"):
+        json_text = st.text_area("Wklej dane JSON tutaj:", height=200)
+        if st.button("Załaduj Dane"):
             handle_json_paste(json_text, category, append_mode)
     
     return category
@@ -56,22 +56,22 @@ def show_admin_data_management():
     """Show admin data management controls in sidebar."""
     if st.session_state.data_loaded:
         st.divider()
-        st.subheader("🛠️ Data Management (Admin Only)")
+        st.subheader("🛠️ Zarządzanie Danymi (Tylko Admin)")
         
         # Show current categories
         if st.session_state.categories:
-            st.write("**Available categories:**")
+            st.write("**Dostępne kategorie:**")
             for cat in st.session_state.categories:
                 cat_data = st.session_state.processor.get_data_by_category(cat)
-                st.write(f"- {cat.title()}: {len(cat_data)} jobs")
+                st.write(f"- {cat.title()}: {len(cat_data)} ofert")
         
         # Clear data options
-        if st.button("🗑️ Clear All Data", type="secondary"):
+        if st.button("🗑️ Wyczyść Wszystkie Dane", type="secondary"):
             clear_all_data()
 
 def show_user_sidebar_info():
     """Show info section for regular users in sidebar."""
-    st.info("👁️ **Viewing Mode**\n\nYou can browse all available job market data and analytics. Data upload is restricted to administrators.")
+    st.info("👁️ **Tryb Przeglądania**\n\nMożesz przeglądać wszystkie dostępne dane o rynku pracy i analizy. Przesyłanie danych jest ograniczone do administratorów.")
 
 def show_guest_sidebar_info():
     """Show info section for guest users in sidebar."""
@@ -115,33 +115,33 @@ def show_sidebar_filters(auth_manager, df):
             filtered_df = filtered_df.head(50)
         
         # City filter
-        cities = ['All'] + sorted(filtered_df['city'].unique().tolist()) if not filtered_df.empty else ['All']
+        cities = ['Wszystkie'] + sorted(filtered_df['city'].unique().tolist()) if not filtered_df.empty else ['Wszystkie']
         if auth_manager.is_authenticated():
             selected_city = st.selectbox("Miasto:", cities)
         else:
-            selected_city = st.selectbox("Miasto:", ['All'], disabled=True, help="Zaloguj się aby filtrować")
+            selected_city = st.selectbox("Miasto:", ['Wszystkie'], disabled=True, help="Zaloguj się aby filtrować")
         
         # Experience level filter
-        exp_levels = ['All'] + sorted(filtered_df['experienceLevel'].unique().tolist()) if not filtered_df.empty else ['All']
+        exp_levels = ['Wszystkie'] + sorted(filtered_df['experienceLevel'].unique().tolist()) if not filtered_df.empty else ['Wszystkie']
         if auth_manager.is_authenticated():
             selected_exp = st.selectbox("Poziom Doświadczenia:", exp_levels)
         else:
-            selected_exp = st.selectbox("Poziom Doświadczenia:", ['All'], disabled=True, help="Zaloguj się aby filtrować")
+            selected_exp = st.selectbox("Poziom Doświadczenia:", ['Wszystkie'], disabled=True, help="Zaloguj się aby filtrować")
         
         # Company filter
-        companies = ['All'] + sorted(filtered_df['companyName'].unique().tolist()) if not filtered_df.empty else ['All']
+        companies = ['Wszystkie'] + sorted(filtered_df['companyName'].unique().tolist()) if not filtered_df.empty else ['Wszystkie']
         if auth_manager.is_authenticated():
             selected_company = st.selectbox("Firma:", companies)
         else:
-            selected_company = st.selectbox("Firma:", ['All'], disabled=True, help="Zaloguj się aby filtrować")
+            selected_company = st.selectbox("Firma:", ['Wszystkie'], disabled=True, help="Zaloguj się aby filtrować")
         
         # Apply additional filters (only for authenticated users)
         if not filtered_df.empty and auth_manager.is_authenticated():
-            if selected_city != 'All':
+            if selected_city != 'Wszystkie':
                 filtered_df = filtered_df[filtered_df['city'] == selected_city]
-            if selected_exp != 'All':
+            if selected_exp != 'Wszystkie':
                 filtered_df = filtered_df[filtered_df['experienceLevel'] == selected_exp]
-            if selected_company != 'All':
+            if selected_company != 'Wszystkie':
                 filtered_df = filtered_df[filtered_df['companyName'] == selected_company]
         
         total_jobs = len(df) if df is not None and not df.empty else 0
@@ -154,7 +154,7 @@ def show_sidebar_filters(auth_manager, df):
         
         # Clear specific category (admin only)
         if auth_manager.is_admin() and selected_category != 'all':
-            if st.button(f"🗑️ Clear '{selected_category.title()}'", type="secondary"):
+            if st.button(f"🗑️ Wyczyść '{selected_category.title()}'", type="secondary"):
                 clear_category_data(selected_category)
         
         return filtered_df

@@ -34,7 +34,7 @@ def process_data(json_data, category=None, append_to_existing=True):
         df = processor.process_json_data(json_data, category=category, append_to_existing=append_to_existing)
         
         if df.empty and not append_to_existing:
-            st.error("❌ No valid job data found in the provided JSON.")
+            st.error("❌ Nie znaleziono poprawnych danych o ofertach pracy w podanym JSON.")
             return False
         
         st.session_state.df = df
@@ -51,7 +51,7 @@ def process_data(json_data, category=None, append_to_existing=True):
         return True
         
     except Exception as e:
-        st.error(f"❌ Error processing data: {str(e)}")
+        st.error(f"❌ Błąd przetwarzania danych: {str(e)}")
         return False
 
 def handle_file_upload(uploaded_file, category, append_mode):
@@ -60,12 +60,12 @@ def handle_file_upload(uploaded_file, category, append_mode):
         json_data = json.load(uploaded_file)
         if process_data(json_data, category=category, append_to_existing=append_mode):
             added_count = len(json_data)
-            category_text = f" to category '{category}'" if category else ""
-            st.success(f"✅ {added_count} jobs loaded successfully{category_text}!")
+            category_text = f" do kategorii '{category}'" if category else ""
+            st.success(f"✅ {added_count} ofert załadowano pomyślnie{category_text}!")
     except json.JSONDecodeError:
-        st.error("❌ Invalid JSON file. Please check the format.")
+        st.error("❌ Nieprawidłowy plik JSON. Sprawdź format.")
     except Exception as e:
-        st.error(f"❌ Error loading file: {str(e)}")
+        st.error(f"❌ Błąd ładowania pliku: {str(e)}")
 
 def handle_json_paste(json_text, category, append_mode):
     """Handle pasted JSON data processing."""
@@ -74,14 +74,14 @@ def handle_json_paste(json_text, category, append_mode):
             json_data = json.loads(json_text)
             if process_data(json_data, category=category, append_to_existing=append_mode):
                 added_count = len(json_data)
-                category_text = f" to category '{category}'" if category else ""
-                st.success(f"✅ {added_count} jobs loaded successfully{category_text}!")
+                category_text = f" do kategorii '{category}'" if category else ""
+                st.success(f"✅ {added_count} ofert załadowano pomyślnie{category_text}!")
         except json.JSONDecodeError:
-            st.error("❌ Invalid JSON format. Please check your data.")
+            st.error("❌ Nieprawidłowy format JSON. Sprawdź swoje dane.")
         except Exception as e:
-            st.error(f"❌ Error processing data: {str(e)}")
+            st.error(f"❌ Błąd przetwarzania danych: {str(e)}")
     else:
-        st.warning("⚠️ Please paste JSON data first.")
+        st.warning("⚠️ Najpierw wklej dane JSON.")
 
 def clear_all_data():
     """Clear all data from the application."""

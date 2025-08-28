@@ -25,7 +25,7 @@ class JobMarketVisualizer:
         top_skills = skills_counter.most_common(top_n)
         
         if not top_skills:
-            return self._create_empty_chart("No skills data available")
+            return self._create_empty_chart("Brak danych o umiejętnościach")
         
         skills, counts = zip(*top_skills)
         
@@ -33,8 +33,8 @@ class JobMarketVisualizer:
             x=list(counts),
             y=list(skills),
             orientation='h',
-            title=f'Top {top_n} Most Demanded Skills',
-            labels={'x': 'Number of Job Postings', 'y': 'Skills'},
+            title=f'Top {top_n} Najbardziej Poszukiwanych Umiejętności',
+            labels={'x': 'Liczba Ofert Pracy', 'y': 'Umiejętności'},
             color=list(counts),
             color_continuous_scale='viridis'
         )
@@ -55,12 +55,12 @@ class JobMarketVisualizer:
         exp_counts = df['experienceLevel'].value_counts()
         
         if exp_counts.empty:
-            return self._create_empty_chart("No experience level data available")
+            return self._create_empty_chart("Brak danych o poziomach doświadczenia")
         
         fig = px.pie(
             values=exp_counts.values,
             names=exp_counts.index,
-            title='Job Distribution by Experience Level'
+            title='Rozkład Ofert według Poziomu Doświadczenia'
         )
         
         fig.update_traces(textposition='inside', textinfo='percent+label')
@@ -96,13 +96,13 @@ class JobMarketVisualizer:
             matrix_data.append(row_data)
         
         if not matrix_data:
-            return self._create_empty_chart("No data available for heatmap")
+            return self._create_empty_chart("Brak danych dla mapy ciepła")
         
         fig = px.imshow(
             matrix_data,
             x=top_skills_list,
             y=exp_levels,
-            title='Skills Demand by Experience Level (%)',
+            title='Zapotrzebowanie na Umiejętności według Poziomu Doświadczenia (%)',
             color_continuous_scale='YlOrRd',
             aspect='auto'
         )
@@ -122,13 +122,13 @@ class JobMarketVisualizer:
         city_counts = df['city'].value_counts().head(top_n)
         
         if city_counts.empty:
-            return self._create_empty_chart("No city data available")
+            return self._create_empty_chart("Brak danych o miastach")
         
         fig = px.bar(
             x=city_counts.index,
             y=city_counts.values,
-            title=f'Top {top_n} Cities by Job Postings',
-            labels={'x': 'City', 'y': 'Number of Job Postings'},
+            title=f'Top {top_n} Miast według Liczby Ofert Pracy',
+            labels={'x': 'Miasto', 'y': 'Liczba Ofert Pracy'},
             color=city_counts.values,
             color_continuous_scale='blues'
         )
@@ -149,14 +149,14 @@ class JobMarketVisualizer:
         company_counts = df['companyName'].value_counts().head(top_n)
         
         if company_counts.empty:
-            return self._create_empty_chart("No company data available")
+            return self._create_empty_chart("Brak danych o firmach")
         
         fig = px.bar(
             x=company_counts.values,
             y=company_counts.index,
             orientation='h',
-            title=f'Top {top_n} Hiring Companies',
-            labels={'x': 'Number of Job Postings', 'y': 'Company'},
+            title=f'Top {top_n} Rekrutujących Firm',
+            labels={'x': 'Liczba Ofert Pracy', 'y': 'Firma'},
             color=company_counts.values,
             color_continuous_scale='greens'
         )
@@ -175,17 +175,17 @@ class JobMarketVisualizer:
             df = self.df
             
         if 'workplaceType' not in df.columns:
-            return self._create_empty_chart("Workplace type data not available")
+            return self._create_empty_chart("Brak danych o typach miejsca pracy")
         
         workplace_counts = df['workplaceType'].value_counts()
         
         if workplace_counts.empty:
-            return self._create_empty_chart("No workplace type data available")
+            return self._create_empty_chart("Brak danych o typach miejsca pracy")
         
         fig = px.pie(
             values=workplace_counts.values,
             names=workplace_counts.index,
-            title='Job Distribution by Workplace Type'
+            title='Rozkład Ofert według Typu Miejsca Pracy'
         )
         
         fig.update_traces(textposition='inside', textinfo='percent+label')
@@ -199,13 +199,13 @@ class JobMarketVisualizer:
             df = self.df
             
         if 'publishedAt' not in df.columns or df['publishedAt'].isna().all():
-            return self._create_empty_chart("Publishing date data not available")
+            return self._create_empty_chart("Brak danych o datach publikacji")
         
         # Filter out null dates and group by date
         df_with_dates = df.dropna(subset=['publishedAt'])
         
         if df_with_dates.empty:
-            return self._create_empty_chart("No valid publishing dates found")
+            return self._create_empty_chart("Nie znaleziono poprawnych dat publikacji")
         
         # Group by date
         df_with_dates['date'] = df_with_dates['publishedAt'].dt.date
@@ -215,8 +215,8 @@ class JobMarketVisualizer:
             daily_counts,
             x='date',
             y='count',
-            title='Job Postings Over Time',
-            labels={'date': 'Date', 'count': 'Number of Job Postings'}
+            title='Oferty Pracy w Czasie',
+            labels={'date': 'Data', 'count': 'Liczba Ofert Pracy'}
         )
         
         fig.update_layout(height=400)
@@ -244,22 +244,22 @@ class JobMarketVisualizer:
                 count = sum(1 for skills_list in exp_df['requiredSkills'] if skill in skills_list)
                 
                 chart_data.append({
-                    'Skill': skill,
-                    'Experience Level': exp_level,
-                    'Count': count
+                    'Umiejętność': skill,
+                    'Poziom Doświadczenia': exp_level,
+                    'Liczba': count
                 })
         
         if not chart_data:
-            return self._create_empty_chart("No data available for skills by experience chart")
+            return self._create_empty_chart("Brak danych dla wykresu umiejętności według doświadczenia")
         
         chart_df = pd.DataFrame(chart_data)
         
         fig = px.bar(
             chart_df,
-            x='Skill',
-            y='Count',
-            color='Experience Level',
-            title=f'Top {top_skills} Skills by Experience Level',
+            x='Umiejętność',
+            y='Liczba',
+            color='Poziom Doświadczenia',
+            title=f'Top {top_skills} Umiejętności według Poziomu Doświadczenia',
             barmode='group'
         )
         
@@ -276,13 +276,13 @@ class JobMarketVisualizer:
             df = self.df
             
         if 'publishedAt' not in df.columns or df['publishedAt'].isna().all():
-            return self._create_empty_chart("Publishing date data not available for skills trends")
+            return self._create_empty_chart("Brak danych o datach publikacji dla trendów umiejętności")
         
         # Filter out null dates
         df_with_dates = df.dropna(subset=['publishedAt'])
         
         if df_with_dates.empty:
-            return self._create_empty_chart("No valid publishing dates found for skills trends")
+            return self._create_empty_chart("Nie znaleziono poprawnych dat publikacji dla trendów umiejętności")
         
         # Get top skills first
         all_skills = []
@@ -292,7 +292,7 @@ class JobMarketVisualizer:
         top_skills_list = [skill for skill, _ in Counter(all_skills).most_common(top_skills)]
         
         if not top_skills_list:
-            return self._create_empty_chart("No skills data available for trends")
+            return self._create_empty_chart("Brak danych o umiejętnościach dla trendów")
         
         # Group by date and skill
         df_with_dates['date'] = df_with_dates['publishedAt'].dt.date
@@ -305,23 +305,23 @@ class JobMarketVisualizer:
             for skill in top_skills_list:
                 count = sum(1 for skills_list in date_df['requiredSkills'] if skill in skills_list)
                 trend_data.append({
-                    'Date': date,
-                    'Skill': skill,
-                    'Count': count
+                    'Data': date,
+                    'Umiejętność': skill,
+                    'Liczba': count
                 })
         
         if not trend_data:
-            return self._create_empty_chart("No trend data available")
+            return self._create_empty_chart("Brak danych trendowych")
         
         trend_df = pd.DataFrame(trend_data)
         
         fig = px.line(
             trend_df,
-            x='Date',
-            y='Count',
-            color='Skill',
-            title=f'Top {top_skills} Skills Demand Over Time',
-            labels={'Date': 'Publication Date', 'Count': 'Number of Job Postings'}
+            x='Data',
+            y='Liczba',
+            color='Umiejętność',
+            title=f'Top {top_skills} - Zapotrzebowanie na Umiejętności w Czasie',
+            labels={'Data': 'Data Publikacji', 'Liczba': 'Liczba Ofert Pracy'}
         )
         
         fig.update_layout(
