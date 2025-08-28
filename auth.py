@@ -190,33 +190,76 @@ class AuthManager:
         return False, "User not found"
 
 def show_login_form():
-    """Display login form as a popup/modal."""
+    """Display login/register form with tabs."""
     auth_manager = AuthManager()
     
     with st.container():
-        st.markdown("### 🔐 Login to SkillViz Analytics")
+        # Create tabs for Login and Register
+        tab1, tab2 = st.tabs(["🔐 Logowanie", "📝 Załóż konto"])
         
-        with st.form("login_form"):
-            username = st.text_input("Username:")
-            password = st.text_input("Password:", type="password")
+        with tab1:
+            st.markdown("### Zaloguj się do SkillViz Analytics")
             
-            col1, col2 = st.columns(2)
-            with col1:
-                login_submitted = st.form_submit_button("Login", type="primary")
-            with col2:
-                if st.form_submit_button("Demo Credentials"):
-                    st.info("**Test User:** testuser / test123")
-                    st.info("**Admin:** skillviz / Skillviz^2")
-            
-            if login_submitted:
-                if username and password:
-                    if auth_manager.authenticate(username, password):
-                        st.success(f"✅ Welcome, {username}!")
-                        st.rerun()
+            with st.form("login_form"):
+                username = st.text_input("Nazwa użytkownika:")
+                password = st.text_input("Hasło:", type="password")
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    login_submitted = st.form_submit_button("Zaloguj się", type="primary")
+                with col2:
+                    if st.form_submit_button("Dane testowe"):
+                        st.info("**Użytkownik testowy:** testuser / test123")
+                        st.info("**Administrator:** skillviz / Skillviz^2")
+                
+                if login_submitted:
+                    if username and password:
+                        if auth_manager.authenticate(username, password):
+                            st.success(f"✅ Witaj, {username}!")
+                            st.rerun()
+                        else:
+                            st.error("❌ Nieprawidłowa nazwa użytkownika lub hasło")
                     else:
-                        st.error("❌ Invalid username or password")
+                        st.warning("⚠️ Wprowadź nazwę użytkownika i hasło")
+        
+        with tab2:
+            st.markdown("### Załóż nowe konto")
+            
+            with st.form("register_form_public"):
+                reg_username = st.text_input("Nazwa użytkownika:", key="reg_username")
+                reg_email = st.text_input("Adres email:", key="reg_email") 
+                reg_password = st.text_input("Hasło:", type="password", key="reg_password")
+                reg_confirm_password = st.text_input("Potwierdź hasło:", type="password", key="reg_confirm_password")
+                
+                # Show info about email verification
+                if auth_manager.email_service.is_configured():
+                    st.info("📧 Po rejestracji otrzymasz email weryfikacyjny")
                 else:
-                    st.warning("⚠️ Please enter both username and password")
+                    st.info("📧 EmailLabs nie skonfigurowany - konto zostanie aktywowane automatycznie")
+                
+                register_submitted = st.form_submit_button("Załóż konto", type="primary")
+                
+                if register_submitted:
+                    if reg_username and reg_email and reg_password and reg_confirm_password:
+                        if reg_password != reg_confirm_password:
+                            st.error("❌ Hasła nie pasują do siebie")
+                        else:
+                            success, message = auth_manager.register_user(
+                                reg_username, reg_password, reg_email, 
+                                created_by='self_registered'
+                            )
+                            if success:
+                                st.success(f"✅ {message}")
+                                if auth_manager.email_service.is_configured():
+                                    st.info("📧 Sprawdź swoją skrzynkę pocztową i kliknij link weryfikacyjny")
+                                else:
+                                    st.info("🔄 Możesz się teraz zalogować")
+                                    # Auto-switch to login tab after successful registration
+                                    st.session_state.show_login_tab = True
+                            else:
+                                st.error(f"❌ {message}")
+                    else:
+                        st.warning("⚠️ Wypełnij wszystkie pola")
 
 def show_user_management():
     """Display user management interface (admin only)."""
