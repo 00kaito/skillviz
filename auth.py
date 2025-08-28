@@ -115,10 +115,11 @@ class AuthManager:
         # Send verification email if configured and requested
         if email and self.email_service.is_configured() and send_verification:
             if self.email_service.send_verification_email(email, username):
-                return True, "Użytkownik zarejestrowany. Sprawdź email aby zweryfikować konto."
+                return True, "✅ Konto utworzone! Sprawdź email aby zweryfikować konto."
             else:
-                # If email sending fails, still create the account but mark as unverified
-                return True, "Użytkownik zarejestrowany, ale nie udało się wysłać emaila weryfikacyjnego."
+                # If email sending fails, mark account as verified so user can still login
+                st.session_state.users_db[username]['email_verified'] = True
+                return True, "✅ Konto utworzone! (Email weryfikacyjny nie został wysłany - możesz się zalogować)"
         
         return True, "Użytkownik zarejestrowany pomyślnie"
     

@@ -49,11 +49,10 @@ class EmailLabsService:
             st.error("⚠️ EmailLabs nie jest skonfigurowany. Sprawdź zmienne środowiskowe.")
             return False
         
-        # Debug: Show configuration status
-        st.info(f"🔍 Debug - EmailLabs skonfigurowany:")
-        st.info(f"   - App Key: {'✓ Ustawiony' if self.app_key else '❌ Brak'}")
-        st.info(f"   - Secret Key: {'✓ Ustawiony' if self.secret_key else '❌ Brak'}")
-        st.info(f"   - From Email: {self.from_email}")
+        # Debug: Show basic configuration status 
+        if not (self.app_key and self.secret_key):
+            st.error("⚠️ EmailLabs API keys nie są ustawione")
+            return False
         
         try:
             # EmailLabs API correct endpoint
@@ -77,21 +76,15 @@ class EmailLabsService:
             
             response = requests.post(url, headers=headers, data=data)
             
-            # Debug information
-            st.error(f"🔍 Debug - Status Code: {response.status_code}")
-            st.error(f"🔍 Debug - Response: {response.text[:500]}")
-            
             if response.status_code == 200:
                 result = response.json()
                 if result.get('status') == 'success':
                     return True
                 else:
-                    st.error(f"❌ Błąd EmailLabs: {result.get('message', 'Nieznany błąd')}")
-                    st.error(f"🔍 Pełna odpowiedź: {result}")
+                    st.warning(f"⚠️ EmailLabs API błąd: {result.get('message', 'Nieznany błąd')}")
                     return False
             else:
-                st.error(f"❌ Błąd HTTP: {response.status_code}")
-                st.error(f"🔍 Treść odpowiedzi: {response.text}")
+                st.warning(f"⚠️ EmailLabs HTTP błąd {response.status_code}: {response.text[:200]}")
                 return False
                 
         except requests.RequestException as e:
@@ -312,7 +305,7 @@ def show_verification_management():
             with col2:
                 st.write(f"⏰ {data['expires_at'].strftime('%H:%M %d.%m')}")
             with col3:
-                if st.button(f"🔄 Wyślij ponownie", key=f"resend_{email}"):
+                if st.button(f"🔄 Wyślij ponownie", key=f"resend_btn_{hash(email)}"):
                     # Note: We need username, but we don't have it here
                     # This would need to be integrated with the auth system
                     st.info("Funkcja dostępna po integracji z systemem użytkowników")
