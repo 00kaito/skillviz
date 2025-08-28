@@ -198,28 +198,79 @@ Header: Uwierzytelnianie / Tryb Gościa
 **Opcjonalne pola:**
 - `publishedAt` (dla analiz trendów), `workplaceType`, `remoteInterview`
 
-## 🚀 Instrukcja Developera
+## 🚀 How to Run Locally
 
-### Setup Środowiska
+### Prerequisites
 
+- **Python 3.11+** installed on your system
+- **pip** package manager
+
+### Quick Start
+
+1. **Clone the repository** (or download the source code)
+   ```bash
+   git clone <repository-url>
+   cd skillviz-analytics
+   ```
+
+2. **Install dependencies**
+   ```bash
+   pip install streamlit>=1.49.0 pandas>=2.3.2 plotly>=6.3.0 numpy>=2.3.2 requests>=2.31.0
+   ```
+   
+   *Alternative: If you have `uv` package manager:*
+   ```bash
+   uv pip install -r pyproject.toml
+   ```
+
+3. **Run the application**
+   ```bash
+   streamlit run app.py --server.port 5000
+   ```
+
+4. **Open your browser** and navigate to:
+   ```
+   http://localhost:5000
+   ```
+
+### Environment Variables (Optional)
+
+For email verification functionality, set these environment variables:
 ```bash
-# 1. Klonowanie repozytorium
-git clone <repository-url>
-cd skillviz-analytics
+export EMAILLABS_APP_KEY=your_app_key
+export EMAILLABS_SECRET_KEY=your_secret_key  
+export EMAILLABS_FROM_EMAIL=your_sender_email@domain.com
+```
 
-# 2. Instalacja zależności
-pip install streamlit pandas plotly numpy
+### Default Login Credentials
 
-# 3. Konfiguracja Streamlit (automatyczna)
-# .streamlit/config.toml zawiera:
+| Role | Email | Password | Access Level |
+|------|--------|----------|--------------|
+| **Admin** | `admin@skillviz.com` | `Skillviz^2` | Full access + data management |
+| **Test User** | `test@skillviz.com` | `test123` | View all data |
+| **Guest** | *(no login needed)* | - | Limited demo data (50 jobs) |
+
+### Configuration
+
+The app includes a default Streamlit configuration in `.streamlit/config.toml`:
+```toml
 [server]
 headless = true
-address = "0.0.0.0" 
+address = "0.0.0.0"
 port = 5000
-
-# 4. Uruchomienie
-streamlit run app.py --server.port 5000
 ```
+
+### Troubleshooting
+
+- **Port already in use**: Use a different port with `--server.port 8501`
+- **Module not found**: Ensure all dependencies are installed with `pip list`
+- **Data not loading**: Check if demo data files exist in `attached_assets/` directory
+
+---
+
+## 🔧 Developer Setup
+
+### Advanced Configuration
 
 ### Kluczowe Wzorce Kodowania
 
