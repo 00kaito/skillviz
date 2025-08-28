@@ -3,6 +3,7 @@ import json
 from collections import Counter, defaultdict
 from datetime import datetime
 import re
+from persistent_storage import PersistentStorage
 
 class JobDataProcessor:
     """Class for processing and analyzing job market data."""
@@ -12,7 +13,59 @@ class JobDataProcessor:
         self.demo_df = None  # Demo data for guests
         self.categories_data = {}  # Store real data by categories
         self.demo_categories_data = {}  # Store demo data by categories
-        self._initialize_demo_data()  # Add demo data for guest users
+        
+        # Initialize persistent storage
+        self.storage = PersistentStorage()
+        
+        # Load existing admin data from storage
+        self._load_persistent_data()
+        
+        # Initialize demo data for guest users
+        self._initialize_demo_data()
+    
+    def _load_persistent_data(self):
+        """Load persistent admin data from storage."""
+        try:
+            # Load main DataFrame
+            self.df = self.storage.load_main_data()
+            
+            # Load categories data
+            self.categories_data = self.storage.load_categories_data()
+            
+            # If we have categories but no main df, rebuild main df
+            if not self.categories_data and self.df is None:
+                # No stored data, that's fine
+                pass
+            elif self.categories_data and (self.df is None or self.df.empty):
+                # Rebuild main df from categories
+                all_dfs = [df for df in self.categories_data.values() if df is not None and not df.empty]
+                if all_dfs:
+                    self.df = pd.concat(all_dfs, ignore_index=True)
+        except Exception as e:
+            print(f"Error loading persistent data: {e}")
+            # Initialize empty if loading fails
+            self.df = None
+            self.categories_data = {}
+    
+    def _save_persistent_data(self):
+        """Save current admin data to persistent storage."""
+        try:
+            # Save main DataFrame
+            self.storage.save_main_data(self.df)
+            
+            # Save categories data
+            self.storage.save_categories_data(self.categories_data)
+            
+            # Save metadata
+            metadata = {
+                'total_records': len(self.df) if self.df is not None and not self.df.empty else 0,
+                'categories_count': len(self.categories_data),
+                'categories': list(self.categories_data.keys())
+            }
+            self.storage.save_metadata(metadata)
+            
+        except Exception as e:
+            print(f"Error saving persistent data: {e}")
     
     def _initialize_demo_data(self):
         """Initialize sample data for guest users."""
@@ -196,6 +249,9 @@ class JobDataProcessor:
             existing_category_df = self.categories_data[category_key]
             new_df = self._remove_duplicates(df, existing_category_df)
             self.categories_data[category_key] = pd.concat([existing_category_df, new_df], ignore_index=True)
+        
+        # Save to persistent storage
+        self._save_persistent_data()
         
         return self.df
     
@@ -460,6 +516,8 @@ class JobDataProcessor:
         if category is None or category == 'all':
             self.df = pd.DataFrame()
             self.categories_data = {}
+            # Clear persistent storage
+            self.storage.clear_all_data()
         else:
             category_key = category.lower().strip()
             if category_key in self.categories_data:
@@ -470,4 +528,6 @@ class JobDataProcessor:
                     self.df = pd.concat(all_dfs, ignore_index=True)
                 else:
                     self.df = pd.DataFrame()
+                # Save updated data to persistent storage
+                self._save_persistent_data()
     
