@@ -10,6 +10,107 @@ class JobDataProcessor:
     def __init__(self):
         self.df = None
         self.categories_data = {}  # Store data by categories
+        self._initialize_sample_data()  # Add sample data for guest users
+    
+    def _initialize_sample_data(self):
+        """Initialize sample data for guest users."""
+        import pandas as pd
+        from datetime import datetime, timedelta
+        import random
+        
+        # Sample job data for guests
+        sample_jobs = [
+            {
+                "title": "Senior Python Developer",
+                "companyName": "TechCorp",
+                "city": "Warsaw",
+                "experienceLevel": "senior",
+                "workingTime": "full_time",
+                "workplaceType": "remote",
+                "publishedAt": "2025-08-20T10:00:00.000Z",
+                "requiredSkills": ["Python", "Django", "PostgreSQL", "Docker"]
+            },
+            {
+                "title": "Frontend Developer",
+                "companyName": "WebStudio",
+                "city": "Krakow",
+                "experienceLevel": "mid",
+                "workingTime": "full_time",
+                "workplaceType": "hybrid",
+                "publishedAt": "2025-08-19T14:30:00.000Z",
+                "requiredSkills": ["JavaScript", "React", "TypeScript", "CSS"]
+            },
+            {
+                "title": "Data Engineer",
+                "companyName": "DataLab",
+                "city": "Gdansk",
+                "experienceLevel": "senior",
+                "workingTime": "full_time",
+                "workplaceType": "remote",
+                "publishedAt": "2025-08-18T09:15:00.000Z",
+                "requiredSkills": ["Python", "Apache Spark", "SQL", "AWS"]
+            },
+            {
+                "title": "Java Developer",
+                "companyName": "Enterprise Solutions",
+                "city": "Warsaw",
+                "experienceLevel": "mid",
+                "workingTime": "full_time",
+                "workplaceType": "office",
+                "publishedAt": "2025-08-21T11:45:00.000Z",
+                "requiredSkills": ["Java", "Spring Boot", "MySQL", "Kubernetes"]
+            },
+            {
+                "title": "DevOps Engineer",
+                "companyName": "CloudTech",
+                "city": "Wroclaw",
+                "experienceLevel": "senior",
+                "workingTime": "full_time",
+                "workplaceType": "remote",
+                "publishedAt": "2025-08-17T16:20:00.000Z",
+                "requiredSkills": ["Docker", "Kubernetes", "AWS", "Terraform"]
+            }
+        ]
+        
+        # Generate more sample data
+        cities = ["Warsaw", "Krakow", "Gdansk", "Wroclaw", "Poznan", "Katowice"]
+        companies = ["TechCorp", "WebStudio", "DataLab", "Enterprise Solutions", "CloudTech", "InnovateIT", "SoftwarePlus", "DevCompany"]
+        levels = ["junior", "mid", "senior"]
+        skills_sets = [
+            ["Python", "Django", "FastAPI", "PostgreSQL"],
+            ["JavaScript", "React", "Node.js", "MongoDB"],
+            ["Java", "Spring Boot", "Hibernate", "MySQL"],
+            ["TypeScript", "Angular", "RxJS", "Firebase"],
+            ["C#", ".NET", "Entity Framework", "SQL Server"],
+            ["Go", "Gin", "Redis", "Docker"],
+            ["PHP", "Laravel", "Vue.js", "MariaDB"]
+        ]
+        
+        base_date = datetime(2025, 8, 15)
+        for i in range(45):  # Generate 45 more jobs to reach 50 total
+            sample_jobs.append({
+                "title": f"{random.choice(['Senior', 'Mid-level', 'Junior'])} {random.choice(['Backend', 'Frontend', 'Fullstack'])} Developer",
+                "companyName": random.choice(companies),
+                "city": random.choice(cities),
+                "experienceLevel": random.choice(levels),
+                "workingTime": "full_time",
+                "workplaceType": random.choice(["remote", "hybrid", "office"]),
+                "publishedAt": (base_date + timedelta(days=random.randint(0, 10))).isoformat() + "Z",
+                "requiredSkills": random.choice(skills_sets) + [random.choice(["Git", "Docker", "Linux", "API"])]
+            })
+        
+        # Process sample data
+        try:
+            df = pd.DataFrame(sample_jobs)
+            df = self._clean_data(df)
+            df['category'] = 'sample'
+            df['upload_timestamp'] = pd.Timestamp.now()
+            
+            self.df = df
+            self.categories_data['sample'] = df.copy()
+        except Exception:
+            # If sample data fails, continue with empty data
+            pass
         
     def process_json_data(self, json_data, category=None, append_to_existing=False):
         """Convert JSON data to processed DataFrame with category support."""

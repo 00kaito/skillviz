@@ -20,13 +20,26 @@ def main():
     st.title("📊 SkillViz Analytics for Engineers")
     st.markdown("### Analyze skill requirements, experience levels, and location-based hiring trends")
     
-    # Check if user is authenticated
-    if not auth_manager.is_authenticated():
-        show_login_form()
-        return
-    
-    # Show authentication header
-    show_auth_header()
+    # Show authentication header if logged in, or allow guest access
+    if auth_manager.is_authenticated():
+        show_auth_header()
+    else:
+        # Guest access header
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.info("🔍 **Tryb Gościa** - Ograniczony dostęp (50 wyników). Zaloguj się dla pełnego dostępu.")
+        with col2:
+            if st.button("🔐 Zaloguj się"):
+                st.session_state.show_login = True
+        
+        # Show login form if requested
+        if st.session_state.get('show_login', False):
+            with st.expander("🔐 Logowanie", expanded=True):
+                show_login_form()
+                if st.button("❌ Anuluj"):
+                    st.session_state.show_login = False
+                    st.rerun()
+        st.divider()
     
     # Initialize session state
     if 'data_loaded' not in st.session_state:
@@ -107,13 +120,16 @@ def main():
                     st.session_state.visualizer = None
                     st.rerun()
         
-        else:
+        elif auth_manager.is_authenticated():
             # User info for non-admin users
             st.info("👁️ **Viewing Mode**\n\nYou can browse all available job market data and analytics. Data upload is restricted to administrators.")
+        else:
+            # Guest user info
+            st.info("🔍 **Tryb Gościa**\n\nMożesz przeglądać ograniczone dane (50 wyników). Zaloguj się dla pełnego dostępu i wszystkich funkcji.")
             
     
-    # Main content area
-    if st.session_state.data_loaded and st.session_state.df is not None:
+    # Main content area - allow guest access
+    if (st.session_state.get('data_loaded', False) and st.session_state.df is not None) or not auth_manager.is_authenticated():
         display_analytics()
     else:
         display_welcome_screen()
@@ -149,15 +165,19 @@ def display_welcome_screen():
     """Display welcome screen with instructions."""
     auth_manager = AuthManager()
     
-    if auth_manager.is_admin():
-        st.info("👈 Please upload a JSON file or paste JSON data in the sidebar to begin analysis.")
-    else:
-        st.info("📊 Welcome to SkillViz Analytics!\n\nYou can browse and analyze job market data. New data uploads are managed by administrators.")
+    if not auth_manager.is_authenticated():
+        st.info("📊 **Witaj w SkillViz Analytics!**\n\nMożesz przeglądać ograniczone dane o rynku pracy (50 wyników). Zaloguj się dla pełnego dostępu do wszystkich funkcji i danych.")
         if not st.session_state.get('data_loaded', False):
-            st.warning("📁 No data available yet. Please contact an administrator to upload job market data.")
+            st.warning("📁 Brak danych do wyświetlenia. Skontaktuj się z administratorem lub spróbuj później.")
+    elif auth_manager.is_admin():
+        st.info("👈 Prześlij plik JSON lub wklej dane w pasku bocznym aby rozpocząć analizę.")
+    else:
+        st.info("📊 Witaj w SkillViz Analytics!\n\nMożesz przeglądać i analizować wszystkie dane o rynku pracy. Przesyłanie nowych danych zarządzają administratorzy.")
+        if not st.session_state.get('data_loaded', False):
+            st.warning("📁 Brak danych. Skontaktuj się z administratorem aby przesłać dane o rynku pracy.")
     
-    with st.expander("📋 Expected JSON Format"):
-        st.markdown("Job market data should contain an array of job objects with the following structure:")
+    with st.expander("📋 Oczekiwany Format JSON"):
+        st.markdown("Dane o rynku pracy powinny zawierać tablicę obiektów ofert pracy o następującej strukturze:")
         sample_json = {
             "companyLogoThumbUrl": "https://example.com/logo.jpg",
             "title": "Senior Data Engineer",
@@ -185,6 +205,10 @@ def display_analytics():
         display_df = df.copy() if df is not None else pd.DataFrame()
     else:
         display_df = processor.get_data_by_category(st.session_state.selected_category)
+    
+    # Apply guest limitations
+    if not auth_manager.is_authenticated() and not display_df.empty:
+        display_df = display_df.head(50)
     
     # Create visualizer with filtered data
     if not display_df.empty:
@@ -225,15 +249,34 @@ def display_analytics():
             
             # Category filter
             category_options = ['all'] + st.session_state.categories
-            selected_category = st.selectbox("Category:", category_options, 
-                                           format_func=lambda x: x.title() if x != 'all' else 'All Categories')
-            st.session_state.selected_category = selected_category
+            
+            # For guests, disable the selectbox and limit to 'all'
+            if not auth_manager.is_authenticated():
+                selected_category = st.selectbox(
+                    "Specjalizacja:", 
+                    ['all'], 
+                    format_func=lambda x: 'Wszystkie Specjalizacje (Ograniczone do 50)',
+                    disabled=True,
+                    help="Zaloguj się aby filtrować według specjalizacji"
+                )
+                st.session_state.selected_category = 'all'
+            else:
+                selected_category = st.selectbox(
+                    "Specjalizacja:", 
+                    category_options, 
+                    format_func=lambda x: x.title() if x != 'all' else 'Wszystkie Specjalizacje'
+                )
+                st.session_state.selected_category = selected_category
             
             # Get data for selected category
             if selected_category == 'all':
-                filtered_df = df.copy()
+                filtered_df = df.copy() if df is not None else pd.DataFrame()
             else:
                 filtered_df = st.session_state.processor.get_data_by_category(selected_category)
+            
+            # Limit data for guest users
+            if not auth_manager.is_authenticated() and not filtered_df.empty:
+                filtered_df = filtered_df.head(50)
             
             # City filter
             cities = ['All'] + sorted(filtered_df['city'].unique().tolist()) if not filtered_df.empty else ['All']
@@ -247,18 +290,28 @@ def display_analytics():
             companies = ['All'] + sorted(filtered_df['companyName'].unique().tolist()) if not filtered_df.empty else ['All']
             selected_company = st.selectbox("Company:", companies)
             
-            # Apply additional filters
+            # Apply additional filters (disabled for guests)
             if not filtered_df.empty:
-                if selected_city != 'All':
-                    filtered_df = filtered_df[filtered_df['city'] == selected_city]
-                if selected_exp != 'All':
-                    filtered_df = filtered_df[filtered_df['experienceLevel'] == selected_exp]
-                if selected_company != 'All':
-                    filtered_df = filtered_df[filtered_df['companyName'] == selected_company]
+                if auth_manager.is_authenticated():
+                    if selected_city != 'All':
+                        filtered_df = filtered_df[filtered_df['city'] == selected_city]
+                    if selected_exp != 'All':
+                        filtered_df = filtered_df[filtered_df['experienceLevel'] == selected_exp]
+                    if selected_company != 'All':
+                        filtered_df = filtered_df[filtered_df['companyName'] == selected_company]
+                else:
+                    # For guests, show all filters as disabled
+                    st.selectbox("Miasto:", ['All'], disabled=True, help="Zaloguj się aby filtrować")
+                    st.selectbox("Poziom Doświadczenia:", ['All'], disabled=True, help="Zaloguj się aby filtrować")
+                    st.selectbox("Firma:", ['All'], disabled=True, help="Zaloguj się aby filtrować")
             
             total_jobs = len(df) if df is not None and not df.empty else 0
             filtered_jobs = len(filtered_df) if not filtered_df.empty else 0
-            st.info(f"Showing {filtered_jobs} of {total_jobs} jobs")
+            
+            if auth_manager.is_authenticated():
+                st.info(f"Pokazuje {filtered_jobs} z {total_jobs} ofert")
+            else:
+                st.warning(f"🔍 **Tryb Gościa**: Pokazuje {filtered_jobs} z {total_jobs} ofert (limit 50)")
             
             # Clear specific category (admin only)
             if auth_manager.is_admin() and selected_category != 'all':
@@ -276,10 +329,15 @@ def display_analytics():
     
     # Show current category info
     if st.session_state.selected_category != 'all':
-        st.info(f"📊 Currently viewing: **{st.session_state.selected_category.title()}** category")
+        st.info(f"📊 Aktualna specjalizacja: **{st.session_state.selected_category.title()}**")
+    elif not auth_manager.is_authenticated():
+        st.warning("🔍 **Tryb Gościa**: Przeglądasz ograniczone dane (50 wyników). Zaloguj się dla pełnego dostępu.")
     
     if display_df.empty:
-        st.warning("⚠️ No data available for the selected category. Please upload some data first.")
+        if auth_manager.is_authenticated():
+            st.warning("⚠️ Brak danych dla wybranej specjalizacji. Administrator musi najpierw przesłać dane.")
+        else:
+            st.warning("⚠️ Brak danych do wyświetlenia. Skontaktuj się z administratorem lub zaloguj się.")
         return
     
     # Apply additional filters from sidebar to display_df
@@ -407,8 +465,16 @@ def display_analytics():
             )
     
     # Show user role info
-    if not auth_manager.is_admin():
-        st.info("🗂️ **Viewing Mode:** You can explore all analytics and download data. Data management requires admin privileges.")
+    if not auth_manager.is_authenticated():
+        col1, col2 = st.columns(2)
+        with col1:
+            st.info("🔍 **Tryb Gościa**: Możesz przeglądać ograniczone analizy i pobierać dane (limit 50 wyników).")
+        with col2:
+            if st.button("🔐 Zaloguj się dla pełnego dostępu"):
+                st.session_state.show_login = True
+                st.rerun()
+    elif not auth_manager.is_admin():
+        st.info("🗂️ **Tryb Przeglądania**: Możesz eksplorować wszystkie analizy i pobierać dane. Zarządzanie danymi wymaga uprawnień administratora.")
 
 if __name__ == "__main__":
     main()
