@@ -201,15 +201,28 @@ class JobMarketVisualizer:
         if 'publishedAt' not in df.columns or df['publishedAt'].isna().all():
             return self._create_empty_chart("Brak danych o datach publikacji")
         
-        # Filter out null dates and group by date
+        # Filter out null dates
         df_with_dates = df.dropna(subset=['publishedAt'])
         
         if df_with_dates.empty:
             return self._create_empty_chart("Nie znaleziono poprawnych dat publikacji")
         
-        # Group by date
-        df_with_dates['date'] = df_with_dates['publishedAt'].dt.date
-        daily_counts = df_with_dates.groupby('date').size().reset_index(name='count')
+        try:
+            # Ensure publishedAt is datetime - convert if needed
+            if not pd.api.types.is_datetime64_any_dtype(df_with_dates['publishedAt']):
+                df_with_dates = df_with_dates.copy()
+                df_with_dates['publishedAt'] = pd.to_datetime(df_with_dates['publishedAt'], errors='coerce')
+                # Remove any rows where conversion failed
+                df_with_dates = df_with_dates.dropna(subset=['publishedAt'])
+                
+            if df_with_dates.empty:
+                return self._create_empty_chart("Nie znaleziono poprawnych dat publikacji")
+            
+            # Group by date
+            df_with_dates['date'] = df_with_dates['publishedAt'].dt.date
+            daily_counts = df_with_dates.groupby('date').size().reset_index(name='count')
+        except Exception as e:
+            return self._create_empty_chart(f"Błąd przetwarzania dat: {str(e)}")
         
         fig = px.line(
             daily_counts,
@@ -294,8 +307,21 @@ class JobMarketVisualizer:
         if not top_skills_list:
             return self._create_empty_chart("Brak danych o umiejętnościach dla trendów")
         
-        # Group by date and skill
-        df_with_dates['date'] = df_with_dates['publishedAt'].dt.date
+        try:
+            # Ensure publishedAt is datetime - convert if needed
+            if not pd.api.types.is_datetime64_any_dtype(df_with_dates['publishedAt']):
+                df_with_dates = df_with_dates.copy()
+                df_with_dates['publishedAt'] = pd.to_datetime(df_with_dates['publishedAt'], errors='coerce')
+                # Remove any rows where conversion failed
+                df_with_dates = df_with_dates.dropna(subset=['publishedAt'])
+                
+            if df_with_dates.empty:
+                return self._create_empty_chart("Nie znaleziono poprawnych dat publikacji")
+                
+            # Group by date and skill
+            df_with_dates['date'] = df_with_dates['publishedAt'].dt.date
+        except Exception as e:
+            return self._create_empty_chart(f"Błąd przetwarzania dat: {str(e)}")
         
         # Create data for line chart
         trend_data = []
