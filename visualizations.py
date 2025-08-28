@@ -201,22 +201,20 @@ class JobMarketVisualizer:
         if 'publishedAt' not in df.columns or df['publishedAt'].isna().all():
             return self._create_empty_chart("Brak danych o datach publikacji")
         
-        # Filter out null dates
-        df_with_dates = df.dropna(subset=['publishedAt'])
+        # Filter out null dates and ensure datetime conversion
+        df_with_dates = df.dropna(subset=['publishedAt']).copy()
         
         if df_with_dates.empty:
             return self._create_empty_chart("Nie znaleziono poprawnych dat publikacji")
         
         try:
-            # Ensure publishedAt is datetime - convert if needed
-            if not pd.api.types.is_datetime64_any_dtype(df_with_dates['publishedAt']):
-                df_with_dates = df_with_dates.copy()
-                df_with_dates['publishedAt'] = pd.to_datetime(df_with_dates['publishedAt'], errors='coerce')
-                # Remove any rows where conversion failed
-                df_with_dates = df_with_dates.dropna(subset=['publishedAt'])
+            # Always convert to datetime to be safe
+            df_with_dates['publishedAt'] = pd.to_datetime(df_with_dates['publishedAt'], errors='coerce')
+            # Remove any rows where conversion failed
+            df_with_dates = df_with_dates.dropna(subset=['publishedAt'])
                 
             if df_with_dates.empty:
-                return self._create_empty_chart("Nie znaleziono poprawnych dat publikacji")
+                return self._create_empty_chart("Nie znaleziono poprawnych dat publikacji po konwersji")
             
             # Group by date
             df_with_dates['date'] = df_with_dates['publishedAt'].dt.date
@@ -308,15 +306,13 @@ class JobMarketVisualizer:
             return self._create_empty_chart("Brak danych o umiejętnościach dla trendów")
         
         try:
-            # Ensure publishedAt is datetime - convert if needed
-            if not pd.api.types.is_datetime64_any_dtype(df_with_dates['publishedAt']):
-                df_with_dates = df_with_dates.copy()
-                df_with_dates['publishedAt'] = pd.to_datetime(df_with_dates['publishedAt'], errors='coerce')
-                # Remove any rows where conversion failed
-                df_with_dates = df_with_dates.dropna(subset=['publishedAt'])
+            # Always convert to datetime to be safe
+            df_with_dates['publishedAt'] = pd.to_datetime(df_with_dates['publishedAt'], errors='coerce')
+            # Remove any rows where conversion failed
+            df_with_dates = df_with_dates.dropna(subset=['publishedAt'])
                 
             if df_with_dates.empty:
-                return self._create_empty_chart("Nie znaleziono poprawnych dat publikacji")
+                return self._create_empty_chart("Nie znaleziono poprawnych dat publikacji po konwersji")
                 
             # Group by date and skill
             df_with_dates['date'] = df_with_dates['publishedAt'].dt.date
