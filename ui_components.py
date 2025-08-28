@@ -2,10 +2,49 @@
 
 import streamlit as st
 import pandas as pd
+from datetime import datetime, timedelta
 from auth import AuthManager, show_login_form, show_auth_header
 from visualizations import JobMarketVisualizer
 from config import SAMPLE_JSON_DATA
 from data_management import handle_file_upload, handle_json_paste, clear_all_data, clear_category_data
+
+def apply_date_filter(df, date_range):
+    """Apply date filter to dataframe based on selected range."""
+    if 'publishedAt' not in df.columns or df.empty:
+        return df
+    
+    # Make a copy to avoid modifying original
+    filtered_df = df.copy()
+    
+    try:
+        # Ensure publishedAt is datetime
+        filtered_df['publishedAt'] = pd.to_datetime(filtered_df['publishedAt'], errors='coerce')
+        # Remove rows with invalid dates
+        filtered_df = filtered_df.dropna(subset=['publishedAt'])
+        
+        if filtered_df.empty:
+            return df  # Return original if no valid dates
+        
+        # Calculate date thresholds
+        now = datetime.now()
+        
+        if date_range == 'last_month':
+            threshold = now - timedelta(days=30)
+        elif date_range == 'last_quarter':
+            threshold = now - timedelta(days=90)
+        elif date_range == 'last_year':
+            threshold = now - timedelta(days=365)
+        else:
+            return filtered_df  # Return all data for 'all' or unknown ranges
+        
+        # Filter by date
+        filtered_df = filtered_df[filtered_df['publishedAt'] >= threshold]
+        
+        return filtered_df
+        
+    except Exception as e:
+        st.warning(f"⚠️ Błąd filtrowania dat: {str(e)}")
+        return df  # Return original data if filtering fails
 
 def show_guest_header():
     """Show header for guest users."""
@@ -135,6 +174,29 @@ def show_sidebar_filters(auth_manager, df):
         else:
             selected_company = st.selectbox("Firma:", ['Wszystkie'], disabled=True, help="Zaloguj się aby filtrować")
         
+        # Date range filter
+        date_options = {
+            'all': 'Cały okres',
+            'last_month': 'Ostatni miesiąc',
+            'last_quarter': 'Ostatni kwartał',
+            'last_year': 'Ostatni rok'
+        }
+        
+        if auth_manager.is_authenticated():
+            selected_date_range = st.selectbox(
+                "Okres czasowy:", 
+                list(date_options.keys()),
+                format_func=lambda x: date_options[x]
+            )
+        else:
+            selected_date_range = st.selectbox(
+                "Okres czasowy:", 
+                ['all'], 
+                format_func=lambda x: 'Cały okres (Wymagane logowanie)',
+                disabled=True, 
+                help="Zaloguj się aby filtrować według dat"
+            )
+        
         # Apply additional filters (only for authenticated users)
         if not filtered_df.empty and auth_manager.is_authenticated():
             if selected_city != 'Wszystkie':
@@ -143,6 +205,10 @@ def show_sidebar_filters(auth_manager, df):
                 filtered_df = filtered_df[filtered_df['experienceLevel'] == selected_exp]
             if selected_company != 'Wszystkie':
                 filtered_df = filtered_df[filtered_df['companyName'] == selected_company]
+            
+            # Apply date filter
+            if selected_date_range != 'all' and 'publishedAt' in filtered_df.columns:
+                filtered_df = apply_date_filter(filtered_df, selected_date_range)
         
         total_jobs = len(df) if df is not None and not df.empty else 0
         filtered_jobs = len(filtered_df) if filtered_df is not None and len(filtered_df) > 0 else 0
