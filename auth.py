@@ -1,20 +1,29 @@
 import streamlit as st
 import hashlib
+import re
+from emaillabs_service import EmailLabsService
 
 class AuthManager:
     """Class for managing user authentication and authorization."""
     
     def __init__(self):
+        # Initialize EmailLabs service
+        self.email_service = EmailLabsService()
+        
         # Initialize default users if not exists
         if 'users_db' not in st.session_state:
             st.session_state.users_db = {
                 'skillviz': {
                     'password': self._hash_password('Skillviz^2'),
+                    'email': 'admin@skillviz.com',
+                    'email_verified': True,
                     'role': 'admin',
                     'created_by': 'system'
                 },
                 'testuser': {
                     'password': self._hash_password('test123'),
+                    'email': 'test@skillviz.com',
+                    'email_verified': True,
                     'role': 'user',
                     'created_by': 'system'
                 }
@@ -30,14 +39,26 @@ class AuthManager:
         """Hash password using SHA256."""
         return hashlib.sha256(password.encode()).hexdigest()
     
+    def _validate_email(self, email):
+        """Validate email format."""
+        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        return re.match(pattern, email) is not None
+    
     def authenticate(self, username, password):
         """Authenticate user with username and password."""
         if username in st.session_state.users_db:
             stored_password = st.session_state.users_db[username]['password']
             if stored_password == self._hash_password(password):
+                user_data = st.session_state.users_db[username]
+                
+                # Check if email verification is required and user is not verified
+                if self.email_service.is_configured() and not user_data.get('email_verified', False):
+                    st.warning("⚠️ Twoje konto wymaga weryfikacji email. Sprawdź swoją skrzynkę pocztową.")
+                    return False
+                
                 st.session_state.authenticated = True
                 st.session_state.current_user = username
-                st.session_state.user_role = st.session_state.users_db[username]['role']
+                st.session_state.user_role = user_data['role']
                 return True
         return False
     
@@ -60,23 +81,80 @@ class AuthManager:
         """Get current user username."""
         return st.session_state.get('current_user')
     
-    def register_user(self, username, password, created_by=None):
-        """Register new user (admin only)."""
+    def register_user(self, username, password, email=None, created_by=None, send_verification=True):
+        """Register new user with optional email verification."""
         if username in st.session_state.users_db:
-            return False, "User already exists"
+            return False, "Użytkownik już istnieje"
         
         if len(username.strip()) < 3:
-            return False, "Username must be at least 3 characters"
+            return False, "Nazwa użytkownika musi mieć co najmniej 3 znaki"
         
         if len(password) < 6:
-            return False, "Password must be at least 6 characters"
+            return False, "Hasło musi mieć co najmniej 6 znaków"
+        
+        if email and not self._validate_email(email):
+            return False, "Nieprawidłowy format adresu email"
+        
+        # Check if email is already used
+        if email:
+            for existing_user, data in st.session_state.users_db.items():
+                if data.get('email') == email:
+                    return False, "Adres email jest już używany"
+        
+        # Create user account
+        email_verified = not self.email_service.is_configured() or not email or not send_verification
         
         st.session_state.users_db[username] = {
             'password': self._hash_password(password),
+            'email': email or f'{username}@example.com',
+            'email_verified': email_verified,
             'role': 'user',
             'created_by': created_by or st.session_state.get('current_user', 'system')
         }
-        return True, "User registered successfully"
+        
+        # Send verification email if configured and requested
+        if email and self.email_service.is_configured() and send_verification:
+            if self.email_service.send_verification_email(email, username):
+                return True, "Użytkownik zarejestrowany. Sprawdź email aby zweryfikować konto."
+            else:
+                # If email sending fails, still create the account but mark as unverified
+                return True, "Użytkownik zarejestrowany, ale nie udało się wysłać emaila weryfikacyjnego."
+        
+        return True, "Użytkownik zarejestrowany pomyślnie"
+    
+    def verify_email_from_token(self, token):
+        """Verify email using verification token."""
+        result = self.email_service.verify_email_token(token)
+        
+        if result['success']:
+            email = result['email']
+            # Find user by email and mark as verified
+            for username, data in st.session_state.users_db.items():
+                if data.get('email') == email:
+                    st.session_state.users_db[username]['email_verified'] = True
+                    return True, f"Email zweryfikowany pomyślnie dla użytkownika {username}"
+            
+            return False, "Nie znaleziono użytkownika z tym adresem email"
+        else:
+            return False, result['error']
+    
+    def resend_verification_email(self, username):
+        """Resend verification email for user."""
+        if username not in st.session_state.users_db:
+            return False, "Użytkownik nie istnieje"
+        
+        user_data = st.session_state.users_db[username]
+        if user_data.get('email_verified', False):
+            return False, "Email już został zweryfikowany"
+        
+        email = user_data.get('email')
+        if not email or email.endswith('@example.com'):
+            return False, "Brak prawidłowego adresu email"
+        
+        if self.email_service.resend_verification_email(email, username):
+            return True, "Email weryfikacyjny został wysłany ponownie"
+        else:
+            return False, "Nie udało się wysłać emaila weryfikacyjnego"
     
     def get_all_users(self):
         """Get all users (admin only)."""
@@ -87,6 +165,8 @@ class AuthManager:
         for username, data in st.session_state.users_db.items():
             users.append({
                 'username': username,
+                'email': data.get('email', ''),
+                'email_verified': data.get('email_verified', False),
                 'role': data['role'],
                 'created_by': data.get('created_by', 'system')
             })
@@ -151,48 +231,84 @@ def show_user_management():
     # Register new user
     with st.expander("➕ Register New User"):
         with st.form("register_form"):
-            new_username = st.text_input("New Username:")
-            new_password = st.text_input("New Password:", type="password")
-            confirm_password = st.text_input("Confirm Password:", type="password")
+            new_username = st.text_input("Nazwa użytkownika:")
+            new_email = st.text_input("Adres email:")
+            new_password = st.text_input("Hasło:", type="password")
+            confirm_password = st.text_input("Potwierdź hasło:", type="password")
             
-            if st.form_submit_button("Register User"):
-                if new_username and new_password:
+            # Show email verification option if EmailLabs is configured
+            send_verification = True
+            if auth_manager.email_service.is_configured():
+                send_verification = st.checkbox("Wyślij email weryfikacyjny", value=True)
+                st.info("📧 EmailLabs skonfigurowany - weryfikacja email dostępna")
+            else:
+                st.warning("⚠️ EmailLabs nie skonfigurowany - weryfikacja email wyłączona")
+            
+            if st.form_submit_button("Zarejestruj użytkownika"):
+                if new_username and new_password and new_email:
                     if new_password != confirm_password:
-                        st.error("❌ Passwords don't match")
+                        st.error("❌ Hasła nie pasują do siebie")
                     else:
-                        success, message = auth_manager.register_user(new_username, new_password)
+                        success, message = auth_manager.register_user(
+                            new_username, new_password, new_email, 
+                            send_verification=send_verification
+                        )
                         if success:
                             st.success(f"✅ {message}")
                             st.rerun()
                         else:
                             st.error(f"❌ {message}")
                 else:
-                    st.warning("⚠️ Please fill all fields")
+                    st.warning("⚠️ Wypełnij wszystkie pola")
     
     # List all users
-    st.write("**Registered Users:**")
+    st.write("**Zarejestrowani użytkownicy:**")
     users = auth_manager.get_all_users()
     
     for user in users:
-        col1, col2, col3, col4 = st.columns([3, 1, 2, 1])
+        col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 1, 1])
         
         with col1:
             st.write(f"**{user['username']}**")
+            st.write(f"📧 {user['email']}")
         with col2:
             st.write(user['role'])
         with col3:
-            st.write(f"by {user['created_by']}")
+            if user['email_verified']:
+                st.write("✅ Verified")
+            else:
+                st.write("❌ Not verified")
         with col4:
+            # Show resend verification button for unverified users
+            if (not user['email_verified'] and 
+                auth_manager.email_service.is_configured() and
+                not user['email'].endswith('@example.com')):
+                if st.button("📧", key=f"resend_{user['username']}", 
+                           help=f"Wyślij ponownie email weryfikacyjny dla {user['username']}"):
+                    success, message = auth_manager.resend_verification_email(user['username'])
+                    if success:
+                        st.success(f"✅ {message}")
+                    else:
+                        st.error(f"❌ {message}")
+            else:
+                st.write("")
+        with col5:
             if (user['username'] != 'skillviz' and 
                 user['username'] != auth_manager.get_current_user()):
                 if st.button("🗑️", key=f"delete_{user['username']}", 
-                           help=f"Delete {user['username']}"):
+                           help=f"Usuń {user['username']}"):
                     success, message = auth_manager.delete_user(user['username'])
                     if success:
                         st.success(f"✅ {message}")
                         st.rerun()
                     else:
                         st.error(f"❌ {message}")
+    
+    # Show EmailLabs management if configured
+    if auth_manager.email_service.is_configured():
+        st.divider()
+        from emaillabs_service import show_verification_management
+        show_verification_management()
 
 def show_auth_header():
     """Display authentication header with user info and logout."""

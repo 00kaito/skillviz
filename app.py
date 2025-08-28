@@ -17,6 +17,23 @@ def main():
     # Initialize auth manager
     auth_manager = AuthManager()
     
+    # Handle email verification from URL parameters
+    query_params = st.query_params
+    if 'verify_email' in query_params:
+        verify_token = query_params.get('verify_email', [''])[0] if isinstance(query_params.get('verify_email'), list) else query_params.get('verify_email', '')
+        if verify_token:
+            success, message = auth_manager.verify_email_from_token(verify_token)
+            if success:
+                st.success(f"✅ {message}")
+                st.balloons()
+                # Clear the URL parameter after successful verification
+                st.query_params.clear()
+            else:
+                st.error(f"❌ {message}")
+            
+            # Show login form after verification
+            st.session_state.show_login = True
+    
     st.title("📊 SkillViz Analytics for Engineers")
     st.markdown("### Analyze skill requirements, experience levels, and location-based hiring trends")
     
