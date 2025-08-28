@@ -287,30 +287,33 @@ def display_analytics():
             
             # City filter
             cities = ['All'] + sorted(filtered_df['city'].unique().tolist()) if not filtered_df.empty else ['All']
-            selected_city = st.selectbox("City:", cities)
+            if auth_manager.is_authenticated():
+                selected_city = st.selectbox("Miasto:", cities)
+            else:
+                selected_city = st.selectbox("Miasto:", ['All'], disabled=True, help="Zaloguj się aby filtrować")
             
             # Experience level filter
             exp_levels = ['All'] + sorted(filtered_df['experienceLevel'].unique().tolist()) if not filtered_df.empty else ['All']
-            selected_exp = st.selectbox("Experience Level:", exp_levels)
+            if auth_manager.is_authenticated():
+                selected_exp = st.selectbox("Poziom Doświadczenia:", exp_levels)
+            else:
+                selected_exp = st.selectbox("Poziom Doświadczenia:", ['All'], disabled=True, help="Zaloguj się aby filtrować")
             
             # Company filter
             companies = ['All'] + sorted(filtered_df['companyName'].unique().tolist()) if not filtered_df.empty else ['All']
-            selected_company = st.selectbox("Company:", companies)
+            if auth_manager.is_authenticated():
+                selected_company = st.selectbox("Firma:", companies)
+            else:
+                selected_company = st.selectbox("Firma:", ['All'], disabled=True, help="Zaloguj się aby filtrować")
             
-            # Apply additional filters (disabled for guests)
-            if not filtered_df.empty:
-                if auth_manager.is_authenticated():
-                    if selected_city != 'All':
-                        filtered_df = filtered_df[filtered_df['city'] == selected_city]
-                    if selected_exp != 'All':
-                        filtered_df = filtered_df[filtered_df['experienceLevel'] == selected_exp]
-                    if selected_company != 'All':
-                        filtered_df = filtered_df[filtered_df['companyName'] == selected_company]
-                else:
-                    # For guests, show all filters as disabled
-                    st.selectbox("Miasto:", ['All'], disabled=True, help="Zaloguj się aby filtrować")
-                    st.selectbox("Poziom Doświadczenia:", ['All'], disabled=True, help="Zaloguj się aby filtrować")
-                    st.selectbox("Firma:", ['All'], disabled=True, help="Zaloguj się aby filtrować")
+            # Apply additional filters (only for authenticated users)
+            if not filtered_df.empty and auth_manager.is_authenticated():
+                if selected_city != 'All':
+                    filtered_df = filtered_df[filtered_df['city'] == selected_city]
+                if selected_exp != 'All':
+                    filtered_df = filtered_df[filtered_df['experienceLevel'] == selected_exp]
+                if selected_company != 'All':
+                    filtered_df = filtered_df[filtered_df['companyName'] == selected_company]
             
             total_jobs = len(df) if df is not None and not df.empty else 0
             filtered_jobs = len(filtered_df) if not filtered_df.empty else 0
