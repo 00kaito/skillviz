@@ -37,17 +37,15 @@ def apply_date_filter(df, date_range):
         else:
             return filtered_df  # Return all data for 'all' or unknown ranges
         
-        # Ensure both timestamps are timezone-naive for comparison
-        if filtered_df['publishedAt'].dt.tz is not None:
-            # If publishedAt has timezone, convert to local time and make naive
-            filtered_df['publishedAt'] = filtered_df['publishedAt'].dt.tz_convert(None)
+        # Convert to date only (ignore time) for comparison
+        filtered_df['date_only'] = filtered_df['publishedAt'].dt.date
+        threshold_date = threshold.date()
         
-        if threshold.tz is not None:
-            # If threshold has timezone, make it naive
-            threshold = threshold.tz_localize(None)
+        # Filter by date only (time doesn't matter)
+        filtered_df = filtered_df[filtered_df['date_only'] >= threshold_date]
         
-        # Filter by date
-        filtered_df = filtered_df[filtered_df['publishedAt'] >= threshold]
+        # Remove the temporary column
+        filtered_df = filtered_df.drop('date_only', axis=1)
         
         return filtered_df
         
