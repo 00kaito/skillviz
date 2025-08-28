@@ -7,11 +7,20 @@ from visualizations import JobMarketVisualizer
 
 def initialize_session_state(auth_manager):
     """Initialize session state with data processor and categories."""
-    if 'data_loaded' not in st.session_state:
+    # Initialize processor if not exists
+    if 'processor' not in st.session_state:
         st.session_state.processor = JobDataProcessor()
+    
+    # Check if authentication status has changed or if this is the first load
+    current_auth_status = auth_manager.is_authenticated()
+    previous_auth_status = st.session_state.get('previous_auth_status', None)
+    
+    # Refresh data if auth status changed or first time loading
+    if (previous_auth_status != current_auth_status or 
+        'data_loaded' not in st.session_state):
         
         # Get appropriate data based on authentication status
-        is_guest = not auth_manager.is_authenticated()
+        is_guest = not current_auth_status
         current_data = st.session_state.processor.get_data(is_guest=is_guest)
         
         if not current_data.empty:
@@ -24,7 +33,14 @@ def initialize_session_state(auth_manager):
             st.session_state.df = None
             st.session_state.categories = []
             st.session_state.visualizer = None
+        
+        # Store current auth status for next comparison
+        st.session_state.previous_auth_status = current_auth_status
+    
+    # Initialize other session state variables if needed
+    if 'selected_category' not in st.session_state:
         st.session_state.selected_category = 'all'
+    if 'append_mode' not in st.session_state:
         st.session_state.append_mode = True
 
 def process_data(json_data, category=None, append_to_existing=True):
