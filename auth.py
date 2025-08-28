@@ -13,9 +13,9 @@ class AuthManager:
         # Initialize default users if not exists
         if 'users_db' not in st.session_state:
             st.session_state.users_db = {
-                'skillviz': {
-                    'password': self._hash_password('Skillviz^2'),
-                    'email': 'admin@skillviz.com',
+                'admin': {
+                    'password': self._hash_password('a@a.com'),
+                    'email': 'a@a.com',
                     'email_verified': True,
                     'role': 'admin',
                     'created_by': 'system'
@@ -182,7 +182,7 @@ class AuthManager:
         if username == st.session_state.current_user:
             return False, "Nie można usunąć własnego konta"
         
-        if username == 'skillviz':
+        if username == 'admin':
             return False, "Nie można usunąć głównego konta administratora"
         
         if username in st.session_state.users_db:
@@ -212,7 +212,7 @@ def show_login_form():
                 with col2:
                     if st.form_submit_button("Dane testowe"):
                         st.info("**Użytkownik testowy:** test@skillviz.com / test123")
-                        st.info("**Administrator:** admin@skillviz.com / Skillviz^2")
+                        st.info("**Administrator:** a@a.com / a@a.com")
                 
                 if login_submitted:
                     if email and password:
@@ -338,7 +338,7 @@ def show_user_management():
             else:
                 st.write("")
         with col5:
-            if (user['username'] != 'skillviz' and 
+            if (user['username'] != 'admin' and 
                 user['username'] != auth_manager.get_current_user()):
                 if st.button("🗑️", key=f"delete_{user['username']}", 
                            help=f"Usuń {user['username']}"):
