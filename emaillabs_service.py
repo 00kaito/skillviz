@@ -48,6 +48,12 @@ class EmailLabsService:
             st.error("⚠️ EmailLabs nie jest skonfigurowany. Sprawdź zmienne środowiskowe.")
             return False
         
+        # Debug: Show configuration status
+        st.info(f"🔍 Debug - EmailLabs skonfigurowany:")
+        st.info(f"   - App Key: {'✓ Ustawiony' if self.app_key else '❌ Brak'}")
+        st.info(f"   - Secret Key: {'✓ Ustawiony' if self.secret_key else '❌ Brak'}")
+        st.info(f"   - From Email: {self.from_email}")
+        
         try:
             url = f"{self.base_url}/send"
             
@@ -68,15 +74,21 @@ class EmailLabsService:
             
             response = requests.post(url, headers=headers, data=data)
             
+            # Debug information
+            st.error(f"🔍 Debug - Status Code: {response.status_code}")
+            st.error(f"🔍 Debug - Response: {response.text[:500]}")
+            
             if response.status_code == 200:
                 result = response.json()
                 if result.get('status') == 'success':
                     return True
                 else:
                     st.error(f"❌ Błąd EmailLabs: {result.get('message', 'Nieznany błąd')}")
+                    st.error(f"🔍 Pełna odpowiedź: {result}")
                     return False
             else:
                 st.error(f"❌ Błąd HTTP: {response.status_code}")
+                st.error(f"🔍 Treść odpowiedzi: {response.text}")
                 return False
                 
         except requests.RequestException as e:
@@ -112,7 +124,12 @@ class EmailLabsService:
             bool: True if email sent successfully
         """
         token = self.generate_verification_token(email)
-        verification_link = f"http://localhost:5000/?verify_email={token}"
+        # Get current Replit URL or fallback to localhost
+        base_url = os.environ.get('REPLIT_DEV_DOMAIN', 'localhost:5000')
+        if base_url != 'localhost:5000':
+            verification_link = f"https://{base_url}/?verify_email={token}"
+        else:
+            verification_link = f"http://localhost:5000/?verify_email={token}"
         
         subject = "Weryfikacja konta - SkillViz Analytics"
         
