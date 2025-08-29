@@ -29,7 +29,782 @@
         "Ruby On Rails"
       ],
       "category": "default",
-      "upload_timestamp": "2025-08-29 17:09:42.426440"
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Junior Software Developer",
+      "company": "LLInformatics",
+      "city": "Warszawa",
+      "employment_type": null,
+      "job_time_type": "Full-time",
+      "remote": false,
+      "seniority": "Junior",
+      "salary": null,
+      "published_date": "2025-08-28 00:00:00",
+      "skills": {
+        "Polish": "C1",
+        "English": "B2",
+        "Vue.Js": "Nice To Have",
+        "JavaScript": "Nice To Have",
+        "Ruby On Rails": "Nice To Have",
+        "Ruby": "Nice To Have"
+      },
+      "url": "https://justjoin.it/job-offer/llinformatics-junior-software-developer-warszawa-ruby",
+      "skillsCount": 6,
+      "requiredSkills": [
+        "Polish",
+        "English",
+        "Vue.Js",
+        "JavaScript",
+        "Ruby On Rails",
+        "Ruby"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Ruby On Rails Developer",
+      "company": "Siepomaga.pl",
+      "city": "Siepomaga.Pl",
+      "employment_type": "B2B",
+      "job_time_type": "Full-time",
+      "remote": true,
+      "seniority": "Mid",
+      "salary": "12 000 - 18 000 PLN",
+      "published_date": "2025-08-29 00:00:00",
+      "skills": {
+        "Rspec": "Regular",
+        "Sql": "Regular",
+        "Ruby On Rails": "Regular",
+        "Ruby": "Regular"
+      },
+      "url": "https://justjoin.it/job-offer/siepomaga-pl-ruby-on-rails-developer-poznan-ruby-ffbc0f21",
+      "skillsCount": 4,
+      "requiredSkills": [
+        "Rspec",
+        "Sql",
+        "Ruby On Rails",
+        "Ruby"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Senior Backend Engineer (Ruby)",
+      "company": "Upside",
+      "city": "Upside",
+      "employment_type": "B2B",
+      "job_time_type": "Full-time",
+      "remote": false,
+      "seniority": "Senior",
+      "salary": "20 800 - 26 500 PLN",
+      "published_date": "2025-08-25 00:00:00",
+      "skills": {
+        "English": "B2",
+        "Git": "Advanced",
+        "Oop": "Advanced",
+        "Amazon Aws": "Advanced",
+        "Sql": "Advanced",
+        "Ruby On Rails": "Advanced",
+        "Ruby": "Advanced"
+      },
+      "url": "https://justjoin.it/job-offer/upside-senior-backend-engineer-ruby--krakow-ruby",
+      "skillsCount": 7,
+      "requiredSkills": [
+        "English",
+        "Git",
+        "Oop",
+        "Amazon Aws",
+        "Sql",
+        "Ruby On Rails",
+        "Ruby"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Backend Engineer (Ruby)",
+      "company": "Upside",
+      "city": "Upside",
+      "employment_type": "B2B",
+      "job_time_type": "Full-time",
+      "remote": false,
+      "seniority": "Mid",
+      "salary": "14 800 - 19 300 PLN",
+      "published_date": "2025-08-25 00:00:00",
+      "skills": {
+        "English": "B2",
+        "Git": "Regular",
+        "Oop": "Regular",
+        "Amazon Aws": "Regular",
+        "Sql": "Regular",
+        "Ruby": "Regular",
+        "Ruby On Rails": "Regular"
+      },
+      "url": "https://justjoin.it/job-offer/upside-backend-engineer-ruby--krakow-ruby",
+      "skillsCount": 7,
+      "requiredSkills": [
+        "English",
+        "Git",
+        "Oop",
+        "Amazon Aws",
+        "Sql",
+        "Ruby",
+        "Ruby On Rails"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Ruby on Rails",
+      "company": "SmartLunch",
+      "city": "Wrocław",
+      "employment_type": "B2B, Permanent",
+      "job_time_type": "Full-time",
+      "remote": false,
+      "seniority": "Senior",
+      "salary": "19 500 - 23 000 PLN",
+      "published_date": "2025-08-29 00:00:00",
+      "skills": {
+        "Git": "Advanced",
+        "Rspec": "Advanced",
+        "Ansible": "Nice To Have",
+        "Rabbitmq": "Nice To Have",
+        "Redis": "Nice To Have",
+        "MongoDB": "Nice To Have",
+        "Cicd": "Nice To Have"
+      },
+      "url": "https://justjoin.it/job-offer/smartlunch-ruby-on-rails-wroclaw-ruby",
+      "skillsCount": 7,
+      "requiredSkills": [
+        "Git",
+        "Rspec",
+        "Ansible",
+        "Rabbitmq",
+        "Redis",
+        "MongoDB",
+        "Cicd"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Ruby on Rails Developer",
+      "company": "Vendo",
+      "city": "Warszawa",
+      "employment_type": "B2B",
+      "job_time_type": "Full-time",
+      "remote": false,
+      "seniority": "Mid",
+      "salary": "18 000 - 25 000 PLN",
+      "published_date": "2025-08-26 00:00:00",
+      "skills": {
+        "Ruby On Rails": "Advanced",
+        "Ruby": "Advanced",
+        "Sidekiq": "Regular",
+        "Rspec": "Regular",
+        "Sql": "Regular",
+        "JavaScript": "Regular",
+        "Capybara": "Regular",
+        "Activejob": "Regular",
+        "Spree": "Nice To Have",
+        "Hotwire": "Nice To Have"
+      },
+      "url": "https://justjoin.it/job-offer/vendo-ruby-on-rails-developer-warszawa-ruby-dd1e64a8",
+      "skillsCount": 10,
+      "requiredSkills": [
+        "Ruby On Rails",
+        "Ruby",
+        "Sidekiq",
+        "Rspec",
+        "Sql",
+        "JavaScript",
+        "Capybara",
+        "Activejob",
+        "Spree",
+        "Hotwire"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Ruby on Rails Engineer (Mid Level)",
+      "company": "Medihive",
+      "city": "Medihive",
+      "employment_type": "B2B",
+      "job_time_type": "Full-time",
+      "remote": true,
+      "seniority": "Mid",
+      "salary": "21 300 - 23 000 PLN",
+      "published_date": "2025-08-26 00:00:00",
+      "skills": {
+        "Ruby On Rails": "Advanced",
+        "Ruby": "Advanced",
+        "Scss": "Regular",
+        "Stimulus": "Regular",
+        "Html5": "Regular",
+        "HTML": "Regular",
+        "Hotwire": "Regular",
+        "CSS": "Regular",
+        "Kamal": "Nice To Have"
+      },
+      "url": "https://justjoin.it/job-offer/medihive-ruby-on-rails-engineer-mid-level--krakow-ruby",
+      "skillsCount": 9,
+      "requiredSkills": [
+        "Ruby On Rails",
+        "Ruby",
+        "Scss",
+        "Stimulus",
+        "Html5",
+        "HTML",
+        "Hotwire",
+        "CSS",
+        "Kamal"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Senior Ruby On Rails Engineer (freelance)",
+      "company": "Blazity",
+      "city": "Warszawa",
+      "employment_type": "B2B",
+      "job_time_type": null,
+      "remote": true,
+      "seniority": "Senior",
+      "salary": "125 - 160 PLN",
+      "published_date": "2025-08-28 00:00:00",
+      "skills": {
+        "English": "C1",
+        "Polish": "C1",
+        "Ruby On Rails": "Advanced",
+        "Apache Kafka": "Regular",
+        "PostgreSQL": "Regular",
+        "Rabbitmq": "Regular"
+      },
+      "url": "https://justjoin.it/job-offer/blazity-senior-ruby-on-rails-engineer-freelance--warszawa-ruby",
+      "skillsCount": 6,
+      "requiredSkills": [
+        "English",
+        "Polish",
+        "Ruby On Rails",
+        "Apache Kafka",
+        "PostgreSQL",
+        "Rabbitmq"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Staff Product Engineer",
+      "company": "Yard Corporate",
+      "city": "Poland (Remote)",
+      "employment_type": "B2B",
+      "job_time_type": "Full-time",
+      "remote": true,
+      "seniority": "Senior",
+      "salary": "150 000 - 180 000 USD",
+      "published_date": "2025-08-29 00:00:00",
+      "skills": {
+        "English": "C1",
+        "Ruby": "Master",
+        "Clickhouse": "Regular",
+        "Node.Js": "Nice To Have"
+      },
+      "url": "https://justjoin.it/job-offer/yard-corporate-staff-product-engineer-poland-remote--ruby",
+      "skillsCount": 4,
+      "requiredSkills": [
+        "English",
+        "Ruby",
+        "Clickhouse",
+        "Node.Js"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Ruby on Rails Developer (Mid-Level)",
+      "company": "Sellway Sp. z o. o.",
+      "city": "Kraków",
+      "employment_type": "B2B",
+      "job_time_type": "Full-time",
+      "remote": true,
+      "seniority": "Mid",
+      "salary": "8 000 - 12 000 PLN",
+      "published_date": "2025-08-01 00:00:00",
+      "skills": {
+        "Ruby On Rails": "Regular",
+        "Ruby": "Regular",
+        "Rest Api": "Regular",
+        "PostgreSQL": "Junior",
+        "Rspec": "Junior",
+        "Ai": "Nice To Have"
+      },
+      "url": "https://justjoin.it/job-offer/sellway-sp-z-o-o--ruby-on-rails-developer-mid-level--krakow-ruby",
+      "skillsCount": 6,
+      "requiredSkills": [
+        "Ruby On Rails",
+        "Ruby",
+        "Rest Api",
+        "PostgreSQL",
+        "Rspec",
+        "Ai"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Senior Ruby on Rails Engineer (Team Lead)",
+      "company": "Medihive",
+      "city": "Medihive",
+      "employment_type": "B2B",
+      "job_time_type": "Full-time",
+      "remote": true,
+      "seniority": "Senior",
+      "salary": "21 600 - 30 270 PLN",
+      "published_date": "2025-08-29 00:00:00",
+      "skills": {
+        "Ruby On Rails": "Master",
+        "Ruby": "Master",
+        "Scss": "Regular",
+        "Stimulus": "Regular",
+        "Html5": "Regular",
+        "HTML": "Regular",
+        "Hotwire": "Regular",
+        "CSS": "Regular",
+        "Kamal": "Nice To Have"
+      },
+      "url": "https://justjoin.it/job-offer/medihive-senior-ruby-on-rails-engineer-krakow-ruby-05e02aef",
+      "skillsCount": 9,
+      "requiredSkills": [
+        "Ruby On Rails",
+        "Ruby",
+        "Scss",
+        "Stimulus",
+        "Html5",
+        "HTML",
+        "Hotwire",
+        "CSS",
+        "Kamal"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Ruby Developer",
+      "company": "EndySoft",
+      "city": "Endysoft",
+      "employment_type": "B2B",
+      "job_time_type": "Full-time",
+      "remote": true,
+      "seniority": "Mid",
+      "salary": "15 000 - 18 300 PLN",
+      "published_date": "2025-08-25 00:00:00",
+      "skills": {
+        "Ruby On Rails": "Advanced",
+        "Ruby": "Advanced",
+        "Postresql": "Regular",
+        "MySQL": "Regular",
+        "Restful Api": "Regular",
+        "Git": "Regular",
+        "Agile": "Regular"
+      },
+      "url": "https://justjoin.it/job-offer/endysoft-ruby-developer-warszawa-ruby",
+      "skillsCount": 7,
+      "requiredSkills": [
+        "Ruby On Rails",
+        "Ruby",
+        "Postresql",
+        "MySQL",
+        "Restful Api",
+        "Git",
+        "Agile"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Senior Ruby on Rails Engineer",
+      "company": "Housecall Pro",
+      "city": "Housecall Pro",
+      "employment_type": "B2B",
+      "job_time_type": "Full-time",
+      "remote": true,
+      "seniority": "Senior",
+      "salary": "6 500 - 8 000 USD",
+      "published_date": "2025-08-22 00:00:00",
+      "skills": {
+        "Ruby On Rails": "Advanced",
+        "Ruby": "Advanced",
+        "Scrum": "Regular",
+        "English": "Regular",
+        "Sql": "Regular",
+        "Polish": "Regular",
+        "React": "Nice To Have",
+        "JavaScript": "Nice To Have"
+      },
+      "url": "https://justjoin.it/job-offer/housecall-pro-senior-ruby-on-rails-engineer-warszawa-ruby-296f449c",
+      "skillsCount": 8,
+      "requiredSkills": [
+        "Ruby On Rails",
+        "Ruby",
+        "Scrum",
+        "English",
+        "Sql",
+        "Polish",
+        "React",
+        "JavaScript"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Senior Ruby on Rails Developer",
+      "company": "iRonin.IT",
+      "city": "Warszawa",
+      "employment_type": "B2B",
+      "job_time_type": "Full-time",
+      "remote": true,
+      "seniority": "Senior",
+      "salary": null,
+      "published_date": "2025-08-29 00:00:00",
+      "skills": {
+        "English": "B2",
+        "Polish": "B2",
+        "Ruby": "Master",
+        "Ruby On Rails": "Master",
+        "Kafka": "Advanced",
+        "Grafana": "Regular",
+        "AWS": "Regular"
+      },
+      "url": "https://justjoin.it/job-offer/ironin-it-senior-ruby-on-rails-developer-warszawa-ruby-0b0d3ede",
+      "skillsCount": 7,
+      "requiredSkills": [
+        "English",
+        "Polish",
+        "Ruby",
+        "Ruby On Rails",
+        "Kafka",
+        "Grafana",
+        "AWS"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Senior Full-Stack Engineer (Ruby on Rails + React)",
+      "company": "Grid Dynamics Poland",
+      "city": "Grid Dynamics Poland",
+      "employment_type": "B2B",
+      "job_time_type": "Full-time",
+      "remote": false,
+      "seniority": "Senior",
+      "salary": null,
+      "published_date": "2025-08-28 00:00:00",
+      "skills": {
+        "Ruby": "Advanced",
+        "React": "Regular"
+      },
+      "url": "https://justjoin.it/job-offer/grid-dynamics-poland-senior-full-stack-engineer-ruby-on-rails-react--warszawa-ruby",
+      "skillsCount": 2,
+      "requiredSkills": [
+        "Ruby",
+        "React"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Full Stack Software Engineer",
+      "company": "Glasson International Sp. z o.o.",
+      "city": "Katowice",
+      "employment_type": "B2B",
+      "job_time_type": "Full-time",
+      "remote": false,
+      "seniority": "Mid",
+      "salary": "12 000 - 22 000 PLN",
+      "published_date": "2025-08-20 00:00:00",
+      "skills": {
+        "Ruby On Rails": "Regular",
+        "PostgreSQL": "Regular",
+        "JavaScript": "Regular"
+      },
+      "url": "https://justjoin.it/job-offer/glasson-international-sp-z-o-o--full-stack-software-engineer-katowice-ruby",
+      "skillsCount": 3,
+      "requiredSkills": [
+        "Ruby On Rails",
+        "PostgreSQL",
+        "JavaScript"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Sr Software Engineer (Ruby on Rails, React.js) - Poland",
+      "company": "Finalsite Poland",
+      "city": "Finalsite Poland",
+      "employment_type": "B2B",
+      "job_time_type": "Full-time",
+      "remote": true,
+      "seniority": "Senior",
+      "salary": "20 000 - 28 000 PLN",
+      "published_date": "2025-08-23 00:00:00",
+      "skills": {
+        "Ruby On Rails": "Master",
+        "React": "Advanced",
+        "Ruby": "Advanced",
+        "Node.Js": "Regular",
+        "AWS": "Nice To Have",
+        "GCP": "Nice To Have"
+      },
+      "url": "https://justjoin.it/job-offer/finalsite-poland-sr-software-engineer-ruby-on-rails-react-js---poland-poland-remote--ruby",
+      "skillsCount": 6,
+      "requiredSkills": [
+        "Ruby On Rails",
+        "React",
+        "Ruby",
+        "Node.Js",
+        "AWS",
+        "GCP"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Senior Ruby on Rails Engineer",
+      "company": "Webdoctor",
+      "city": "Webdoctor",
+      "employment_type": null,
+      "job_time_type": "Full-time",
+      "remote": true,
+      "seniority": "Senior",
+      "salary": "21 600 - 30 270 PLN",
+      "published_date": "2025-08-26 00:00:00",
+      "skills": {
+        "English": "C1",
+        "Oop": "Advanced",
+        "HTML": "Advanced",
+        "CSS": "Advanced",
+        "JavaScript": "Advanced",
+        "Ruby On Rails": "Advanced"
+      },
+      "url": "https://justjoin.it/job-offer/webdoctor-senior-ruby-on-rails-engineer-warszawa-ruby",
+      "skillsCount": 6,
+      "requiredSkills": [
+        "English",
+        "Oop",
+        "HTML",
+        "CSS",
+        "JavaScript",
+        "Ruby On Rails"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Senior Full Stack Developer",
+      "company": "Fakturownia Sp. z o.o.",
+      "city": "Warszawa",
+      "employment_type": "B2B, Permanent",
+      "job_time_type": "Full-time",
+      "remote": false,
+      "seniority": "Senior",
+      "salary": "16 800 - 19 200 PLN",
+      "published_date": "2025-08-28 00:00:00",
+      "skills": {
+        "Ruby On Rails": "Regular",
+        "Node.Js": "Regular",
+        "MySQL": "Regular",
+        "Postresql": "Regular",
+        "AWS": "Regular"
+      },
+      "url": "https://justjoin.it/job-offer/fakturownia-sp-z-o-o--senior-full-stack-developer-warszawa-ruby",
+      "skillsCount": 5,
+      "requiredSkills": [
+        "Ruby On Rails",
+        "Node.Js",
+        "MySQL",
+        "Postresql",
+        "AWS"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Senior Ruby on Rails Developer",
+      "company": "GS Services",
+      "city": "Kraków",
+      "employment_type": "B2B",
+      "job_time_type": "Full-time",
+      "remote": true,
+      "seniority": "Senior",
+      "salary": "150 - 160 PLN",
+      "published_date": "2025-08-29 00:00:00",
+      "skills": {
+        "English": "C1",
+        "Polish": "C2",
+        "Ruby On Rails": "Master"
+      },
+      "url": "https://justjoin.it/job-offer/gs-services-senior-ruby-on-rails-developer-krakow-ruby",
+      "skillsCount": 3,
+      "requiredSkills": [
+        "English",
+        "Polish",
+        "Ruby On Rails"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Full Stack Ruby on Rails Developer",
+      "company": "Calimala.ai",
+      "city": "Calimala.Ai",
+      "employment_type": "B2B",
+      "job_time_type": "Full-time",
+      "remote": true,
+      "seniority": "Senior",
+      "salary": "12 000 - 20 000 PLN",
+      "published_date": "2025-08-27 00:00:00",
+      "skills": {
+        "English": "C1",
+        "Ruby On Rails": "Advanced"
+      },
+      "url": "https://justjoin.it/job-offer/calimala-ai-full-stack-ruby-on-rails-developer-krakow-ruby",
+      "skillsCount": 2,
+      "requiredSkills": [
+        "English",
+        "Ruby On Rails"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Sr Software Engineer ( Full stack RoR) - Poland B2B",
+      "company": "Finalsite Poland",
+      "city": "Finalsite Poland",
+      "employment_type": "B2B",
+      "job_time_type": "Full-time",
+      "remote": true,
+      "seniority": "Senior",
+      "salary": "20 000 - 28 000 PLN",
+      "published_date": "2025-08-26 00:00:00",
+      "skills": {
+        "Ruby On Rails": "Master",
+        "React": "Regular",
+        "JavaScript": "Regular"
+      },
+      "url": "https://justjoin.it/job-offer/finalsite-poland-sr-software-engineer-full-stack-ror---poland-b2b-poland-remote--ruby",
+      "skillsCount": 3,
+      "requiredSkills": [
+        "Ruby On Rails",
+        "React",
+        "JavaScript"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Senior Full Stack Engineer (Ruby/React)",
+      "company": "Railsware",
+      "city": "Railsware",
+      "employment_type": "B2B",
+      "job_time_type": "Full-time",
+      "remote": true,
+      "seniority": "Senior",
+      "salary": null,
+      "published_date": "2025-08-28 00:00:00",
+      "skills": {
+        "English": "B2",
+        "Ruby On Rails": "Master",
+        "Ruby": "Master",
+        "React": "Advanced",
+        "JavaScript": "Advanced",
+        "Sql": "Regular"
+      },
+      "url": "https://justjoin.it/job-offer/railsware-senior-full-stack-engineer-ruby-react--krakow-ruby",
+      "skillsCount": 6,
+      "requiredSkills": [
+        "English",
+        "Ruby On Rails",
+        "Ruby",
+        "React",
+        "JavaScript",
+        "Sql"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Backend Developer",
+      "company": "MindPal",
+      "city": "Gliwice",
+      "employment_type": "B2B",
+      "job_time_type": "Full-time",
+      "remote": false,
+      "seniority": "Mid",
+      "salary": "10 000 - 16 000 PLN",
+      "published_date": "2025-08-26 00:00:00",
+      "skills": {
+        "English": "B2",
+        "PostgreSQL": "Regular",
+        "Backend": "Regular",
+        "API": "Regular",
+        "MySQL": "Regular",
+        "Ruby On Rails": "Regular",
+        "MongoDB": "Nice To Have"
+      },
+      "url": "https://justjoin.it/job-offer/mindpal-backend-developer-gliwice-ruby",
+      "skillsCount": 7,
+      "requiredSkills": [
+        "English",
+        "PostgreSQL",
+        "Backend",
+        "API",
+        "MySQL",
+        "Ruby On Rails",
+        "MongoDB"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
+    },
+    {
+      "role": "Ruby on Rails Fullstack Developer",
+      "company": "Reffine",
+      "city": "Warszawa",
+      "employment_type": "B2B",
+      "job_time_type": "Full-time",
+      "remote": true,
+      "seniority": "Mid",
+      "salary": "15 000 - 19 000 PLN",
+      "published_date": "2025-08-27 00:00:00",
+      "skills": {
+        "Polish": "B2",
+        "English": "B2",
+        "Ruby On Rails": "Advanced",
+        "Ruby": "Advanced",
+        "Git": "Regular",
+        "Sidekiq": "Regular",
+        "PostgreSQL": "Regular",
+        "Rspec": "Regular",
+        "JavaScript": "Junior",
+        "CSS": "Junior"
+      },
+      "url": "https://justjoin.it/job-offer/reffine-ruby-on-rails-fullstack-developer-warszawa-ruby",
+      "skillsCount": 10,
+      "requiredSkills": [
+        "Polish",
+        "English",
+        "Ruby On Rails",
+        "Ruby",
+        "Git",
+        "Sidekiq",
+        "PostgreSQL",
+        "Rspec",
+        "JavaScript",
+        "CSS"
+      ],
+      "category": "default",
+      "upload_timestamp": "2025-08-29 17:15:13.226727"
     }
   ]
 }
