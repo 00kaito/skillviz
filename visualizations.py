@@ -431,10 +431,13 @@ class JobMarketVisualizer:
         
         return fig
     
-    def create_skill_importance_matrix(self, df=None, top_n=15):
+    def create_skill_importance_matrix(self, df=None, top_n=15, excluded_skills=None):
         """Create a heatmap showing skill importance vs frequency."""
         if df is None:
             df = self.df
+        
+        if excluded_skills is None:
+            excluded_skills = []
         
         from data_processor import JobDataProcessor
         processor = JobDataProcessor()
@@ -446,8 +449,18 @@ class JobMarketVisualizer:
         if weight_analysis.empty:
             return self._create_empty_chart("Brak danych do analizy ważności")
         
-        # Get top skills
+        # Filter out excluded skills
+        if excluded_skills:
+            weight_analysis = weight_analysis[~weight_analysis['skill'].isin(excluded_skills)]
+        
+        # Get top skills after filtering
         top_skills = weight_analysis.head(top_n)
+        
+        # Update title based on exclusions
+        title = 'Macierz Ważności Umiejętności: Częstotliwość vs Średni Poziom'
+        if excluded_skills:
+            excluded_count = len(excluded_skills)
+            title += f' (wykluczono {excluded_count} umiejętności)'
         
         fig = px.scatter(
             top_skills,
@@ -455,7 +468,7 @@ class JobMarketVisualizer:
             y='avg_weight',
             size='importance_score',
             hover_name='skill',
-            title='Macierz Ważności Umiejętności: Częstotliwość vs Średni Poziom',
+            title=title,
             labels={
                 'frequency': 'Częstotliwość w Ofertach', 
                 'avg_weight': 'Średni Wymagany Poziom',

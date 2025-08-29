@@ -126,8 +126,21 @@ def show_skills_analysis(display_df, visualizer, processor):
     
     # Skill importance matrix
     st.subheader("Macierz Ważności Umiejętności")
+    
+    # Get available skills for exclusion option
+    weight_analysis_for_options = processor.get_skill_weight_analysis(display_df)
+    if not weight_analysis_for_options.empty:
+        available_skills = weight_analysis_for_options['skill'].tolist()
+        excluded_skills = st.multiselect(
+            "🚫 Wyklucz umiejętności z analizy:",
+            options=available_skills,
+            help="Wybierz umiejętności, które chcesz wykluczyć z macierzy ważności aby lepiej zobaczyć pozostałe"
+        )
+    else:
+        excluded_skills = []
+    
     if visualizer:
-        fig_matrix = visualizer.create_skill_importance_matrix(display_df)
+        fig_matrix = visualizer.create_skill_importance_matrix(display_df, excluded_skills=excluded_skills)
         st.plotly_chart(fig_matrix, width='stretch')
     
     # Skill weight statistics table
