@@ -131,9 +131,12 @@ def show_skills_analysis(display_df, visualizer, processor):
     weight_analysis_for_options = processor.get_skill_weight_analysis(display_df)
     if not weight_analysis_for_options.empty:
         available_skills = weight_analysis_for_options['skill'].tolist()
+        # Set default exclusions - Polish is excluded by default
+        default_exclusions = [skill for skill in available_skills if skill.lower() in ['polish', 'polski']]
         excluded_skills = st.multiselect(
             "🚫 Wyklucz umiejętności z analizy:",
             options=available_skills,
+            default=default_exclusions,
             help="Wybierz umiejętności, które chcesz wykluczyć z macierzy ważności aby lepiej zobaczyć pozostałe"
         )
     else:
