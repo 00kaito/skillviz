@@ -198,26 +198,26 @@ class JobMarketVisualizer:
         if df is None:
             df = self.df
             
-        if 'publishedAt' not in df.columns or df['publishedAt'].isna().all():
+        if 'published_date' not in df.columns or df['published_date'].isna().all():
             return self._create_empty_chart("Brak danych o datach publikacji")
         
         # Filter out null dates and ensure datetime conversion
-        df_with_dates = df.dropna(subset=['publishedAt']).copy()
+        df_with_dates = df.dropna(subset=['published_date']).copy()
         
         if df_with_dates.empty:
             return self._create_empty_chart("Nie znaleziono poprawnych dat publikacji")
         
         try:
             # Always convert to datetime to be safe
-            df_with_dates['publishedAt'] = pd.to_datetime(df_with_dates['publishedAt'], errors='coerce')
+            df_with_dates['published_date'] = pd.to_datetime(df_with_dates['published_date'], errors='coerce')
             # Remove any rows where conversion failed
-            df_with_dates = df_with_dates.dropna(subset=['publishedAt'])
+            df_with_dates = df_with_dates.dropna(subset=['published_date'])
                 
             if df_with_dates.empty:
                 return self._create_empty_chart("Nie znaleziono poprawnych dat publikacji po konwersji")
             
             # Group by date
-            df_with_dates['date'] = df_with_dates['publishedAt'].dt.date
+            df_with_dates['date'] = df_with_dates['published_date'].dt.date
             daily_counts = df_with_dates.groupby('date').size().reset_index(name='count')
         except Exception as e:
             return self._create_empty_chart(f"Błąd przetwarzania dat: {str(e)}")
@@ -286,11 +286,11 @@ class JobMarketVisualizer:
         if df is None:
             df = self.df
             
-        if 'publishedAt' not in df.columns or df['publishedAt'].isna().all():
+        if 'published_date' not in df.columns or df['published_date'].isna().all():
             return self._create_empty_chart("Brak danych o datach publikacji dla trendów umiejętności")
         
         # Filter out null dates
-        df_with_dates = df.dropna(subset=['publishedAt'])
+        df_with_dates = df.dropna(subset=['published_date'])
         
         if df_with_dates.empty:
             return self._create_empty_chart("Nie znaleziono poprawnych dat publikacji dla trendów umiejętności")
@@ -307,15 +307,15 @@ class JobMarketVisualizer:
         
         try:
             # Always convert to datetime to be safe
-            df_with_dates['publishedAt'] = pd.to_datetime(df_with_dates['publishedAt'], errors='coerce')
+            df_with_dates['published_date'] = pd.to_datetime(df_with_dates['published_date'], errors='coerce')
             # Remove any rows where conversion failed
-            df_with_dates = df_with_dates.dropna(subset=['publishedAt'])
+            df_with_dates = df_with_dates.dropna(subset=['published_date'])
                 
             if df_with_dates.empty:
                 return self._create_empty_chart("Nie znaleziono poprawnych dat publikacji po konwersji")
                 
             # Group by date and skill
-            df_with_dates['date'] = df_with_dates['publishedAt'].dt.date
+            df_with_dates['date'] = df_with_dates['published_date'].dt.date
         except Exception as e:
             return self._create_empty_chart(f"Błąd przetwarzania dat: {str(e)}")
         
@@ -349,6 +349,122 @@ class JobMarketVisualizer:
         fig.update_layout(
             height=400,
             hovermode='x unified'
+        )
+        
+        return fig
+    
+    def create_skill_weight_chart(self, df=None, top_n=20):
+        """Create a bar chart showing skill importance weighted by proficiency levels."""
+        if df is None:
+            df = self.df
+        
+        from data_processor import JobDataProcessor
+        processor = JobDataProcessor()
+        processor.df = df
+        
+        # Get skill weight analysis
+        weight_analysis = processor.get_skill_weight_analysis(df)
+        
+        if weight_analysis.empty:
+            return self._create_empty_chart("Brak danych o wagach umiejętności")
+        
+        # Get top skills by importance score
+        top_skills = weight_analysis.head(top_n)
+        
+        fig = px.bar(
+            top_skills,
+            x='importance_score',
+            y='skill',
+            orientation='h',
+            title=f'Top {top_n} Umiejętności według Wagi Ważności',
+            labels={'importance_score': 'Ocena Ważności', 'skill': 'Umiejętności'},
+            color='avg_weight',
+            color_continuous_scale='viridis',
+            hover_data=['frequency', 'avg_weight']
+        )
+        
+        fig.update_layout(
+            height=600,
+            yaxis={'categoryorder': 'total ascending'},
+            showlegend=False
+        )
+        
+        return fig
+    
+    def create_skills_by_level_chart(self, df=None, top_levels=5):
+        """Create a stacked bar chart showing skills distribution by proficiency level."""
+        if df is None:
+            df = self.df
+        
+        from data_processor import JobDataProcessor
+        processor = JobDataProcessor()
+        processor.df = df
+        
+        # Get skills by level analysis
+        skills_by_level = processor.get_skills_by_level(df)
+        
+        if skills_by_level.empty:
+            return self._create_empty_chart("Brak danych o poziomach umiejętności")
+        
+        # Get top skills overall for filtering
+        top_skills = skills_by_level.groupby('skill')['count'].sum().nlargest(15).index
+        filtered_data = skills_by_level[skills_by_level['skill'].isin(top_skills)]
+        
+        fig = px.bar(
+            filtered_data,
+            x='skill',
+            y='count',
+            color='level',
+            title='Rozkład Umiejętności według Poziomów Biegłości',
+            labels={'count': 'Liczba Ofert', 'skill': 'Umiejętności', 'level': 'Poziom'},
+            color_discrete_sequence=px.colors.qualitative.Set3
+        )
+        
+        fig.update_layout(
+            height=500,
+            xaxis_tickangle=-45,
+            legend_title_text='Poziom Biegłości'
+        )
+        
+        return fig
+    
+    def create_skill_importance_matrix(self, df=None, top_n=15):
+        """Create a heatmap showing skill importance vs frequency."""
+        if df is None:
+            df = self.df
+        
+        from data_processor import JobDataProcessor
+        processor = JobDataProcessor()
+        processor.df = df
+        
+        # Get skill weight analysis
+        weight_analysis = processor.get_skill_weight_analysis(df)
+        
+        if weight_analysis.empty:
+            return self._create_empty_chart("Brak danych do analizy ważności")
+        
+        # Get top skills
+        top_skills = weight_analysis.head(top_n)
+        
+        fig = px.scatter(
+            top_skills,
+            x='frequency',
+            y='avg_weight',
+            size='importance_score',
+            hover_name='skill',
+            title='Macierz Ważności Umiejętności: Częstotliwość vs Średni Poziom',
+            labels={
+                'frequency': 'Częstotliwość w Ofertach', 
+                'avg_weight': 'Średni Wymagany Poziom',
+                'importance_score': 'Ocena Ważności'
+            },
+            color='importance_score',
+            color_continuous_scale='viridis'
+        )
+        
+        fig.update_layout(
+            height=500,
+            showlegend=False
         )
         
         return fig

@@ -104,6 +104,40 @@ def show_skills_analysis(display_df, visualizer, processor):
     combinations = processor.get_skill_combinations(display_df)
     if not combinations.empty:
         st.dataframe(combinations.head(15), width='stretch')
+    
+    st.divider()
+    
+    # NEW: Skill importance weight analysis
+    st.header("Analiza Wagi Umiejętności według Poziomów")
+    st.markdown("*Analiza uwzględniająca nie tylko częstotliwość umiejętności, ale także wymagany poziom biegłości*")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        # Skill weight chart
+        if visualizer:
+            fig_weight = visualizer.create_skill_weight_chart(display_df)
+            st.plotly_chart(fig_weight, width='stretch')
+    
+    with col2:
+        # Skills by level chart  
+        if visualizer:
+            fig_levels = visualizer.create_skills_by_level_chart(display_df)
+            st.plotly_chart(fig_levels, width='stretch')
+    
+    # Skill importance matrix
+    st.subheader("Macierz Ważności Umiejętności")
+    if visualizer:
+        fig_matrix = visualizer.create_skill_importance_matrix(display_df)
+        st.plotly_chart(fig_matrix, width='stretch')
+    
+    # Skill weight statistics table
+    st.subheader("Ranking Umiejętności według Wagi Ważności")
+    weight_analysis = processor.get_skill_weight_analysis(display_df)
+    if not weight_analysis.empty:
+        # Format the data for better display
+        display_data = weight_analysis[['skill', 'frequency', 'avg_weight', 'importance_score']].head(20)
+        display_data.columns = ['Umiejętność', 'Częstotliwość', 'Średni Poziom', 'Ocena Ważności']
+        st.dataframe(display_data, width='stretch', use_container_width=True)
 
 def show_experience_analysis(display_df, visualizer):
     """Show experience level analysis tab content."""
@@ -157,13 +191,13 @@ def show_trends_analysis(display_df, visualizer, processor):
     st.header("Trendy Rynkowe")
     
     # Publishing trends over time
-    if visualizer and 'publishedAt' in display_df.columns:
+    if visualizer and 'published_date' in display_df.columns:
         fig_trends = visualizer.create_publishing_trends_chart(display_df)
         st.plotly_chart(fig_trends, width='stretch')
     
     # Skills trends over time
     st.subheader("Zapotrzebowanie na Umiejętności w Czasie")
-    if visualizer and 'publishedAt' in display_df.columns:
+    if visualizer and 'published_date' in display_df.columns:
         fig_skills_trends = visualizer.create_skills_trends_chart(display_df)
         st.plotly_chart(fig_skills_trends, width='stretch')
     

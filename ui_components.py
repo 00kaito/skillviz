@@ -10,17 +10,17 @@ from data_management import handle_file_upload, handle_json_paste, clear_all_dat
 
 def apply_date_filter(df, date_range):
     """Apply date filter to dataframe based on selected range."""
-    if 'publishedAt' not in df.columns or df.empty:
+    if 'published_date' not in df.columns or df.empty:
         return df
     
     # Make a copy to avoid modifying original
     filtered_df = df.copy()
     
     try:
-        # Ensure publishedAt is datetime
-        filtered_df['publishedAt'] = pd.to_datetime(filtered_df['publishedAt'], errors='coerce')
+        # Ensure published_date is datetime
+        filtered_df['published_date'] = pd.to_datetime(filtered_df['published_date'], errors='coerce')
         # Remove rows with invalid dates
-        filtered_df = filtered_df.dropna(subset=['publishedAt'])
+        filtered_df = filtered_df.dropna(subset=['published_date'])
         
         if filtered_df.empty:
             return df  # Return original if no valid dates
@@ -38,7 +38,7 @@ def apply_date_filter(df, date_range):
             return filtered_df  # Return all data for 'all' or unknown ranges
         
         # Convert to date only (ignore time) for comparison
-        filtered_df['date_only'] = filtered_df['publishedAt'].dt.date
+        filtered_df['date_only'] = filtered_df['published_date'].dt.date
         threshold_date = threshold.date()
         
         # Filter by date only (time doesn't matter)

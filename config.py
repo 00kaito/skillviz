@@ -19,16 +19,21 @@ def setup_app_title():
 # Application constants
 GUEST_DATA_LIMIT = 50
 SAMPLE_JSON_DATA = {
-    "companyLogoThumbUrl": "https://example.com/logo.jpg",
-    "title": "Senior Data Engineer",
-    "companyName": "Example Company",
+    "role": "Senior Data Engineer",
+    "company": "Example Company",
     "city": "Warsaw",
-    "experienceLevel": "senior",
-    "workingTime": "full_time",
-    "workplaceType": "remote",
-    "remoteInterview": True,
-    "openToHireUkrainians": False,
-    "publishedAt": "2025-08-18T13:00:28.333Z",
-    "requiredSkills": ["ETL", "Java", "SQL", "Python"],
-    "link": "https://example.com/job-offer"
+    "employment_type": "B2B",
+    "job_time_type": "Full-time",
+    "remote": False,
+    "seniority": "Senior",
+    "salary": "15 000 - 20 000 PLN",
+    "published_date": "18.08.2025",
+    "skills": {
+        "Python": "Senior",
+        "SQL": "Regular", 
+        "Java": "Regular",
+        "ETL": "Senior",
+        "English": "B2"
+    },
+    "url": "https://example.com/job-offer"
 }

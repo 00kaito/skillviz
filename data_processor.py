@@ -72,109 +72,109 @@ class JobDataProcessor:
         import pandas as pd
         import json
         
-        # Real job data from justjoin.it for guest users
+        # Sample job data in new format with skill proficiency levels for guest users
         sample_jobs_json = """[
   {
-    "companyLogoThumbUrl": "https://imgproxy.justjoinit.tech/bFGNTASeWwjwkqRg_RQp1jBciVPTsqxPRhdbFhUWXdQ/h:200/w:200/plain/https://public.justjoin.it/companies/logos/original/b637586175130bac310e3bc341cb8f467b51cb47.png",
-    "title": "Software Architect - Retention Engineering",
-    "companyName": "LeoVegas Group",
+    "role": "Software Architect - Retention Engineering",
+    "company": "LeoVegas Group",
     "city": "Warszawa",
-    "experienceLevel": "senior",
-    "workingTime": "full_time",
-    "workplaceType": "hybrid",
-    "remoteInterview": true,
-    "openToHireUkrainians": false,
-    "publishedAt": "2025-08-18T16:00:16.827Z",
-    "requiredSkills": [
-      "Java",
-      "Spring",
-      "Microservices",
-      "Event-Driven Architecture",
-      "Kotlin"
-    ],
-    "link": "https://justjoin.it/job-offer/leovegas-group-software-architect---retention-engineering-warszawa-architecture"
+    "employment_type": "B2B",
+    "job_time_type": "Full-time",
+    "remote": false,
+    "seniority": "Senior",
+    "salary": "18 000 - 25 000 PLN",
+    "published_date": "18.08.2025",
+    "skills": {
+      "Java": "Senior",
+      "Spring": "Senior",
+      "Microservices": "Senior",
+      "Event-Driven Architecture": "Expert",
+      "Kotlin": "Regular",
+      "English": "B2"
+    },
+    "url": "https://justjoin.it/job-offer/leovegas-group-software-architect---retention-engineering-warszawa-architecture"
   },
   {
-    "companyLogoThumbUrl": "https://imgproxy.justjoinit.tech/a6AwdH0Kg2092hlDOy6Ft79KiueBiPVq4q3u5xlJoH4/h:200/w:200/plain/https://public.justjoin.it/companies/logos/original/d8ad9cb44be0ed13e5fbba3e3d5fed23f11df5bd.png",
-    "title": "Senior Java Developer (Remote)",
-    "companyName": "Caspian One",
+    "role": "Senior Java Developer (Remote)",
+    "company": "Caspian One",
     "city": "Warszawa",
-    "experienceLevel": "senior",
-    "workingTime": "full_time",
-    "workplaceType": "remote",
-    "remoteInterview": true,
-    "openToHireUkrainians": true,
-    "publishedAt": "2025-08-18T16:00:16.827Z",
-    "requiredSkills": [
-      "Spring Boot",
-      "Multi-threading",
-      "Java",
-      "Concurrency"
-    ],
-    "link": "https://justjoin.it/job-offer/caspian-one-senior-java-developer-remote--warszawa-java"
+    "employment_type": "B2B",
+    "job_time_type": "Full-time",
+    "remote": true,
+    "seniority": "Senior",
+    "salary": "15 000 - 20 000 PLN",
+    "published_date": "18.08.2025",
+    "skills": {
+      "Spring Boot": "Senior",
+      "Multi-threading": "Senior",
+      "Java": "Senior",
+      "Concurrency": "Regular",
+      "English": "B2"
+    },
+    "url": "https://justjoin.it/job-offer/caspian-one-senior-java-developer-remote--warszawa-java"
   },
   {
-    "companyLogoThumbUrl": "https://imgproxy.justjoinit.tech/BzWgyxi50NEVw8vVhCjtH0e1OtZow3scOIpr5d1O1qQ/h:200/w:200/plain/https://public.justjoin.it/companies/logos/original/b6fd52b7d3d170271a3d77ac5cc99a1212236ce3.jpg",
-    "title": "Frontend Developer (Angular + React)",
-    "companyName": "emagine Polska",
+    "role": "Frontend Developer (Angular + React)",
+    "company": "emagine Polska",
     "city": "Warszawa",
-    "experienceLevel": "senior",
-    "workingTime": "full_time",
-    "workplaceType": "remote",
-    "remoteInterview": true,
-    "openToHireUkrainians": false,
-    "publishedAt": "2025-08-18T16:00:16.827Z",
-    "requiredSkills": [
-      "JavaScript",
-      "React",
-      "Angular",
-      "TypeScript",
-      "AWS"
-    ],
-    "link": "https://justjoin.it/job-offer/emagine-polska-frontend-developer-angular-react--warszawa-javascript"
+    "employment_type": "B2B",
+    "job_time_type": "Full-time",
+    "remote": true,
+    "seniority": "Senior",
+    "salary": "12 000 - 18 000 PLN",
+    "published_date": "18.08.2025",
+    "skills": {
+      "JavaScript": "Senior",
+      "React": "Senior",
+      "Angular": "Regular",
+      "TypeScript": "Senior",
+      "AWS": "Regular",
+      "English": "B2"
+    },
+    "url": "https://justjoin.it/job-offer/emagine-polska-frontend-developer-angular-react--warszawa-javascript"
   },
   {
-    "companyLogoThumbUrl": "https://imgproxy.justjoinit.tech/OAngGJ1FOa5x3uuFmt9RcjwMSApQe_mgE1iwT8H1Tg4/h:200/w:200/plain/https://s3.eu-west-1.amazonaws.com/images.justjoin.it/justjoinit/company-logos/ff873b2e-f897-4406-8d45-3906b0f5caec.png",
-    "title": "SAP MM Stream Lead",
-    "companyName": "Kevin Edward",
+    "role": "SAP MM Stream Lead",
+    "company": "Kevin Edward",
     "city": "Warszawa",
-    "experienceLevel": "senior",
-    "workingTime": "full_time",
-    "workplaceType": "remote",
-    "remoteInterview": false,
-    "openToHireUkrainians": true,
-    "publishedAt": "2025-08-18T16:00:16.827Z",
-    "requiredSkills": [
-      "SAP MM",
-      "SAP EWM",
-      "SAP TM",
-      "Agile",
-      "Ariba",
-      "S4 Transformation",
-      "integration"
-    ],
-    "link": "https://justjoin.it/job-offer/kevin-edward-sap-mm-stream-lead-warszawa-erp"
+    "employment_type": "B2B",
+    "job_time_type": "Full-time",
+    "remote": true,
+    "seniority": "Expert",
+    "salary": "20 000 - 28 000 PLN",
+    "published_date": "18.08.2025",
+    "skills": {
+      "SAP MM": "Expert",
+      "SAP EWM": "Senior",
+      "SAP TM": "Senior",
+      "Agile": "Regular",
+      "Ariba": "Regular",
+      "S4 Transformation": "Senior",
+      "Integration": "Senior",
+      "English": "B2"
+    },
+    "url": "https://justjoin.it/job-offer/kevin-edward-sap-mm-stream-lead-warszawa-erp"
   },
   {
-    "companyLogoThumbUrl": "https://imgproxy.justjoinit.tech/-hapeh8uotd9bVuXYLJp_xjt66lo52D5QBbuUFcZ3vc/h:200/w:200/plain/https://s3.eu-west-1.amazonaws.com/images.justjoin.it/justjoinit/company-logos/eed96226-ad41-4665-9907-df18d8dd991e.png",
-    "title": "SAP PP Stream Lead",
-    "companyName": "Kevin Edward",
+    "role": "SAP PP Stream Lead",
+    "company": "Kevin Edward",
     "city": "Warszawa",
-    "experienceLevel": "senior",
-    "workingTime": "full_time",
-    "workplaceType": "remote",
-    "remoteInterview": false,
-    "openToHireUkrainians": true,
-    "publishedAt": "2025-08-18T16:00:16.827Z",
-    "requiredSkills": [
-      "SAP PP",
-      "S/4 Transformations",
-      "integration",
-      "Agile",
-      "Signavio",
-      "Celonis"
-    ],
-    "link": "https://justjoin.it/job-offer/kevin-edward-sap-pp-stream-lead-warszawa-erp"
+    "employment_type": "B2B",
+    "job_time_type": "Full-time",
+    "remote": true,
+    "seniority": "Expert",
+    "salary": "20 000 - 28 000 PLN",
+    "published_date": "18.08.2025",
+    "skills": {
+      "SAP PP": "Expert",
+      "S/4 Transformations": "Senior",
+      "Integration": "Senior",
+      "Agile": "Regular",
+      "Signavio": "Regular",
+      "Celonis": "Regular",
+      "English": "B2"
+    },
+    "url": "https://justjoin.it/job-offer/kevin-edward-sap-pp-stream-lead-warszawa-erp"
   }]"""
         
         # Process sample data
@@ -213,8 +213,8 @@ class JobDataProcessor:
         # Convert to DataFrame
         df = pd.DataFrame(json_data)
         
-        # Validate required columns
-        required_columns = ['title', 'companyName', 'city', 'experienceLevel', 'requiredSkills']
+        # Validate required columns for new format
+        required_columns = ['role', 'company', 'city', 'seniority', 'skills']
         missing_columns = [col for col in required_columns if col not in df.columns]
         if missing_columns:
             raise ValueError(f"Missing required columns: {missing_columns}")
@@ -258,37 +258,41 @@ class JobDataProcessor:
     def _clean_data(self, df):
         """Clean and normalize the data."""
         # Remove rows with missing critical data
-        df = df.dropna(subset=['title', 'companyName', 'requiredSkills'])
+        df = df.dropna(subset=['role', 'company', 'skills'])
         
         # Normalize city names
         df['city'] = df['city'].str.strip().str.title()
         
         # Normalize company names
-        df['companyName'] = df['companyName'].str.strip()
+        df['company'] = df['company'].str.strip()
         
-        # Normalize experience levels
-        df['experienceLevel'] = df['experienceLevel'].str.lower().str.strip()
+        # Normalize seniority levels
+        df['seniority'] = df['seniority'].str.strip()
         
-        # Clean and normalize skills
-        df['requiredSkills'] = df['requiredSkills'].apply(self._normalize_skills)
+        # Clean and normalize skills object
+        df['skills'] = df['skills'].apply(self._normalize_skills_object)
         
-        # Convert publishedAt to datetime if present
-        if 'publishedAt' in df.columns:
-            df['publishedAt'] = pd.to_datetime(df['publishedAt'], errors='coerce')
+        # Convert published_date to datetime if present
+        if 'published_date' in df.columns:
+            df['published_date'] = pd.to_datetime(df['published_date'], format='%d.%m.%Y', errors='coerce')
+            # If parsing fails, try ISO format for backwards compatibility
+            if df['published_date'].isna().all():
+                df['published_date'] = pd.to_datetime(df['published_date'], errors='coerce')
         
         # Add derived columns
-        df['skillsCount'] = df['requiredSkills'].apply(len)
+        df['skillsCount'] = df['skills'].apply(len)
+        df['requiredSkills'] = df['skills'].apply(lambda x: list(x.keys()) if isinstance(x, dict) else [])
         
         return df
     
-    def _normalize_skills(self, skills):
-        """Normalize skill names for consistency."""
-        if not isinstance(skills, list):
-            return []
+    def _normalize_skills_object(self, skills):
+        """Normalize skills object with levels for consistency."""
+        if not isinstance(skills, dict):
+            return {}
         
-        normalized = []
-        for skill in skills:
-            if isinstance(skill, str):
+        normalized = {}
+        for skill, level in skills.items():
+            if isinstance(skill, str) and isinstance(level, str):
                 # Clean the skill name
                 clean_skill = re.sub(r'[^\w\s+#.-]', '', skill.strip())
                 clean_skill = clean_skill.title()
@@ -317,7 +321,8 @@ class JobDataProcessor:
                 }
                 
                 clean_skill = skill_mapping.get(clean_skill, clean_skill)
-                normalized.append(clean_skill)
+                clean_level = level.strip().title()
+                normalized[clean_skill] = clean_level
         
         return normalized
     
@@ -329,7 +334,7 @@ class JobDataProcessor:
         # Create composite key for duplicate detection
         def create_key(row):
             skills_str = '|'.join(sorted(row['requiredSkills'])) if row['requiredSkills'] else ''
-            return f"{row['title']}_{row['companyName']}_{row['city']}_{skills_str}".lower()
+            return f"{row['role']}_{row['company']}_{row['city']}_{skills_str}".lower()
         
         existing_keys = set(existing_df.apply(create_key, axis=1))
         new_df_with_keys = new_df.copy()
@@ -414,23 +419,23 @@ class JobDataProcessor:
         return pd.DataFrame(result_data)
     
     def get_experience_skills_matrix(self, df=None):
-        """Get skills distribution by experience level."""
+        """Get skills distribution by seniority level."""
         if df is None:
             df = self.df
         
         exp_skills = defaultdict(lambda: defaultdict(int))
         
         for _, row in df.iterrows():
-            exp_level = row['experienceLevel']
+            seniority_level = row['seniority']
             for skill in row['requiredSkills']:
-                exp_skills[exp_level][skill] += 1
+                exp_skills[seniority_level][skill] += 1
         
         # Convert to DataFrame for easier handling
         result_data = []
-        for exp_level, skills in exp_skills.items():
+        for seniority_level, skills in exp_skills.items():
             for skill, count in skills.items():
                 result_data.append({
-                    'experience_level': exp_level,
+                    'seniority_level': seniority_level,
                     'skill': skill,
                     'count': count
                 })
@@ -446,18 +451,18 @@ class JobDataProcessor:
         
         # Basic statistics
         summary['Total Jobs'] = len(df)
-        summary['Unique Companies'] = df['companyName'].nunique()
+        summary['Unique Companies'] = df['company'].nunique()
         summary['Unique Cities'] = df['city'].nunique()
         summary['Average Skills per Job'] = round(df['skillsCount'].mean(), 1)
         
         # Most common values
-        summary['Most Common Experience Level'] = df['experienceLevel'].mode().iloc[0] if not df['experienceLevel'].mode().empty else 'N/A'
+        summary['Most Common Seniority Level'] = df['seniority'].mode().iloc[0] if not df['seniority'].mode().empty else 'N/A'
         summary['Top Hiring City'] = df['city'].mode().iloc[0] if not df['city'].mode().empty else 'N/A'
-        summary['Top Hiring Company'] = df['companyName'].mode().iloc[0] if not df['companyName'].mode().empty else 'N/A'
+        summary['Top Hiring Company'] = df['company'].mode().iloc[0] if not df['company'].mode().empty else 'N/A'
         
         # Remote work statistics
-        if 'workplaceType' in df.columns:
-            remote_pct = (df['workplaceType'] == 'remote').sum() / len(df) * 100
+        if 'remote' in df.columns:
+            remote_pct = (df['remote'] == True).sum() / len(df) * 100
             summary['Remote Jobs Percentage'] = f"{remote_pct:.1f}%"
         
         # Skills statistics
@@ -467,6 +472,118 @@ class JobDataProcessor:
             summary['Top Skill Demand'] = f"{all_skills.iloc[0]} jobs ({(all_skills.iloc[0]/len(df)*100):.1f}%)"
         
         return summary
+    
+    def get_skill_weight_analysis(self, df=None):
+        """Analyze skill importance weighted by required proficiency level."""
+        if df is None:
+            df = self.df
+        
+        if df.empty:
+            return pd.DataFrame()
+        
+        # Weight mapping for skill levels
+        level_weights = {
+            'Beginner': 1,
+            'Regular': 2, 
+            'Senior': 3,
+            'Expert': 4,
+            'B1': 1,
+            'B2': 2,
+            'C1': 3,
+            'C2': 4
+        }
+        
+        skill_weight_data = defaultdict(lambda: {'total_weight': 0, 'count': 0, 'levels': defaultdict(int)})
+        
+        for _, row in df.iterrows():
+            skills_dict = row['skills']
+            if isinstance(skills_dict, dict):
+                for skill, level in skills_dict.items():
+                    weight = level_weights.get(level, 2)  # Default weight for unknown levels
+                    skill_weight_data[skill]['total_weight'] += weight
+                    skill_weight_data[skill]['count'] += 1
+                    skill_weight_data[skill]['levels'][level] += 1
+        
+        # Convert to DataFrame
+        result_data = []
+        for skill, data in skill_weight_data.items():
+            avg_weight = data['total_weight'] / data['count'] if data['count'] > 0 else 0
+            importance_score = data['total_weight']  # Total weighted importance
+            
+            result_data.append({
+                'skill': skill,
+                'frequency': data['count'],
+                'total_weight': data['total_weight'],
+                'avg_weight': round(avg_weight, 2),
+                'importance_score': importance_score,
+                'level_distribution': dict(data['levels'])
+            })
+        
+        result_df = pd.DataFrame(result_data)
+        if not result_df.empty:
+            result_df = result_df.sort_values('importance_score', ascending=False)
+        
+        return result_df
+    
+    def get_skills_by_level(self, df=None):
+        """Get skills statistics grouped by proficiency level."""
+        if df is None:
+            df = self.df
+        
+        if df.empty:
+            return pd.DataFrame()
+        
+        level_skills = defaultdict(lambda: defaultdict(int))
+        
+        for _, row in df.iterrows():
+            skills_dict = row['skills']
+            if isinstance(skills_dict, dict):
+                for skill, level in skills_dict.items():
+                    level_skills[level][skill] += 1
+        
+        # Convert to DataFrame
+        result_data = []
+        for level, skills in level_skills.items():
+            for skill, count in skills.items():
+                result_data.append({
+                    'level': level,
+                    'skill': skill,
+                    'count': count
+                })
+        
+        return pd.DataFrame(result_data)
+    
+    def calculate_skill_importance_score(self, skill_name, df=None):
+        """Calculate importance score for a specific skill."""
+        if df is None:
+            df = self.df
+        
+        if df.empty:
+            return 0
+        
+        level_weights = {
+            'Beginner': 1,
+            'Regular': 2, 
+            'Senior': 3,
+            'Expert': 4,
+            'B1': 1,
+            'B2': 2,
+            'C1': 3,
+            'C2': 4
+        }
+        
+        total_score = 0
+        count = 0
+        
+        for _, row in df.iterrows():
+            skills_dict = row['skills']
+            if isinstance(skills_dict, dict) and skill_name in skills_dict:
+                level = skills_dict[skill_name]
+                weight = level_weights.get(level, 2)
+                total_score += weight
+                count += 1
+        
+        return total_score
     
     def get_data(self, is_guest=False):
         """Get appropriate data based on user type."""
