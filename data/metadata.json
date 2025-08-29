@@ -1,11 +1,8 @@
 {
-  "total_records": 838,
-  "categories_count": 4,
+  "total_records": 28,
+  "categories_count": 1,
   "categories": [
-    "javascript",
-    "default",
-    "html",
-    "go"
+    "scala"
   ],
-  "last_updated": "2025-08-29T19:53:14.580076"
+  "last_updated": "2025-08-29T20:29:42.286454"
 }

@@ -95,8 +95,6 @@ def show_admin_data_input():
         json_text = st.text_area("Wklej dane JSON tutaj:", height=200)
         if st.button("Załaduj Dane"):
             handle_json_paste(json_text, append_mode)
-    
-    return category
 
 def show_admin_data_management():
     """Show admin data management controls in sidebar."""

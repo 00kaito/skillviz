@@ -24,7 +24,8 @@ Preferred communication style: Simple, everyday language.
 
 ### Data Processing Architecture
 - **Modular Design**: Separated concerns with dedicated classes for data processing (`JobDataProcessor`), visualization (`JobMarketVisualizer`), and authentication (`AuthManager`)
-- **Category Management**: Data organization by user-defined categories with duplicate detection
+- **Automatic Category Extraction**: Categories are automatically extracted from the "category" field in JSON data with case-insensitive handling
+- **Case-Insensitive Field Processing**: All JSON fields are processed case-insensitively (Role, ROLE, role all work)
 - **Data Validation**: Built-in validation for required columns and data integrity checks
 - **Data Cleaning Pipeline**: Automated normalization of city names, company names, experience levels, and skills data
 - **Error Handling**: Comprehensive error handling for JSON parsing and data validation failures
@@ -38,7 +39,8 @@ Preferred communication style: Simple, everyday language.
 
 ### Data Schema
 The application expects JSON data with the following required fields:
-- `role`: Job title/position
+- `role`: Job title/position (case-insensitive: role, Role, ROLE all work)
+- `category`: Job category/specialization (case-insensitive: category, Category, CATEGORY all work)
 - `company`: Company offering the position
 - `city`: Job location
 - `seniority`: Required seniority level (e.g., Junior, Mid, Senior, Expert)
@@ -49,6 +51,8 @@ The application expects JSON data with the following required fields:
 - `salary`: Salary range (e.g., "10 000 - 16 000 PLN")
 - `published_date`: Publication date in DD.MM.YYYY format
 - `url`: Link to job posting
+
+**Note**: All field names are processed case-insensitively for maximum compatibility.
 
 ## External Dependencies
 

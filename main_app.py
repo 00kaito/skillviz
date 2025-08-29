@@ -52,7 +52,7 @@ def setup_sidebar():
     
     with st.sidebar:
         if auth_manager.is_admin():
-            category = show_admin_data_input()
+            show_admin_data_input()
             show_admin_data_management()
         elif auth_manager.is_authenticated():
             show_user_sidebar_info()
