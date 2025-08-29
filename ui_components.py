@@ -143,22 +143,29 @@ def show_sidebar_filters(auth_manager, df):
             if 'go' not in st.session_state.categories:
                 guest_category_options = ['all'] + st.session_state.categories
             
+            # Get the current index for the selectbox
+            try:
+                current_index = guest_category_options.index(st.session_state.guest_selected_category)
+            except ValueError:
+                current_index = 0
+            
             selected_category = st.selectbox(
                 "Specjalizacja:", 
                 guest_category_options,
-                index=0,  # Always default to first option (go or all)
+                index=current_index,
                 format_func=lambda x: {
                     'go': 'Go (Dostępne)',
                     'all': 'Go (Przykładowe dane)'
-                }.get(x, f"{x.title()} (Niedostępne - Zaloguj się)")
+                }.get(x, f"{x.title()} (Niedostępne - Zaloguj się)"),
+                key="guest_category_selector"
             )
             
             # Check if guest tries to select non-Go category
             if selected_category != 'go' and selected_category != 'all':
                 st.warning("⚠️ Aby uzyskać dostęp do specjalizacji \"{}\" musisz się zalogować. Obecnie możesz przeglądać tylko dane specjalizacji Go.".format(selected_category.title()))
+                # Force back to 'go' without rerun to avoid infinite loop
                 st.session_state.guest_selected_category = 'go' if 'go' in st.session_state.categories else 'all'
                 selected_category = st.session_state.guest_selected_category
-                st.rerun()
             else:
                 st.session_state.guest_selected_category = selected_category
             
