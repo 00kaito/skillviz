@@ -205,8 +205,8 @@ class JobDataProcessor:
             # If sample data fails, continue with empty data
             pass
         
-    def process_json_data(self, json_data, category=None, append_to_existing=False):
-        """Convert JSON data to processed DataFrame with category support."""
+    def process_json_data(self, json_data, append_to_existing=False):
+        """Convert JSON data to processed DataFrame with automatic category detection."""
         if not isinstance(json_data, list):
             raise ValueError("JSON data should be a list of job objects")
         
@@ -215,6 +215,9 @@ class JobDataProcessor:
         
         # Convert to DataFrame
         df = pd.DataFrame(json_data)
+        
+        # Normalize column names to handle case insensitive fields
+        df = self._normalize_column_names(df)
         
         # Validate required columns for new format
         required_columns = ['role', 'company', 'city', 'seniority', 'skills']
@@ -225,11 +228,12 @@ class JobDataProcessor:
         # Clean and normalize data
         df = self._clean_data(df)
         
-        # Add category column
-        if category:
-            df['category'] = category.lower().strip()
-        else:
+        # Set default category if not present in JSON
+        if 'category' not in df.columns:
             df['category'] = 'default'
+        
+        # Normalize category to lowercase
+        df['category'] = df['category'].astype(str).str.lower().str.strip()
         
         # Add upload timestamp for trend tracking
         df['upload_timestamp'] = pd.Timestamp.now()
@@ -243,15 +247,17 @@ class JobDataProcessor:
         else:
             self.df = df
         
-        # Store by category
-        category_key = category.lower().strip() if category else 'default'
-        if category_key not in self.categories_data:
-            self.categories_data[category_key] = df.copy()
-        else:
-            # Merge with existing category data, removing duplicates
-            existing_category_df = self.categories_data[category_key]
-            new_df = self._remove_duplicates(df, existing_category_df)
-            self.categories_data[category_key] = pd.concat([existing_category_df, new_df], ignore_index=True)
+        # Store by category (using extracted category from JSON)
+        category_keys = df['category'].unique()
+        for category_key in category_keys:
+            category_df = df[df['category'] == category_key].copy()
+            if category_key not in self.categories_data:
+                self.categories_data[category_key] = category_df
+            else:
+                # Merge with existing category data, removing duplicates
+                existing_category_df = self.categories_data[category_key]
+                new_df = self._remove_duplicates(category_df, existing_category_df)
+                self.categories_data[category_key] = pd.concat([existing_category_df, new_df], ignore_index=True)
         
         # Save to persistent storage
         self._save_persistent_data()
@@ -286,6 +292,38 @@ class JobDataProcessor:
         df['skillsCount'] = df['skills'].apply(len)
         df['requiredSkills'] = df['skills'].apply(lambda x: list(x.keys()) if isinstance(x, dict) else [])
         
+        return df
+    
+    def _normalize_column_names(self, df):
+        """Normalize column names to handle case insensitive fields."""
+        # Create mapping for common field variations
+        field_mapping = {
+            # Standard fields
+            'role': 'role',
+            'company': 'company', 
+            'city': 'city',
+            'seniority': 'seniority',
+            'skills': 'skills',
+            'category': 'category',
+            'employment_type': 'employment_type',
+            'job_time_type': 'job_time_type',
+            'remote': 'remote',
+            'salary': 'salary',
+            'published_date': 'published_date',
+            'url': 'url'
+        }
+        
+        # Create case insensitive mapping
+        normalized_columns = {}
+        for col in df.columns:
+            col_lower = col.lower().strip()
+            if col_lower in field_mapping:
+                normalized_columns[col] = field_mapping[col_lower]
+            else:
+                normalized_columns[col] = col  # Keep original if no mapping found
+        
+        # Rename columns
+        df = df.rename(columns=normalized_columns)
         return df
     
     def _normalize_skills_object(self, skills):

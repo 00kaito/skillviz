@@ -43,11 +43,11 @@ def initialize_session_state(auth_manager):
     if 'append_mode' not in st.session_state:
         st.session_state.append_mode = True
 
-def process_data(json_data, category=None, append_to_existing=True):
-    """Process the loaded JSON data with category support."""
+def process_data(json_data, append_to_existing=True):
+    """Process the loaded JSON data with automatic category detection."""
     try:
         processor = st.session_state.processor
-        df = processor.process_json_data(json_data, category=category, append_to_existing=append_to_existing)
+        df = processor.process_json_data(json_data, append_to_existing=append_to_existing)
         
         if df.empty and not append_to_existing:
             st.error("❌ Nie znaleziono poprawnych danych o ofertach pracy w podanym JSON.")
@@ -70,28 +70,26 @@ def process_data(json_data, category=None, append_to_existing=True):
         st.error(f"❌ Błąd przetwarzania danych: {str(e)}")
         return False
 
-def handle_file_upload(uploaded_file, category, append_mode):
+def handle_file_upload(uploaded_file, append_mode):
     """Handle JSON file upload and processing."""
     try:
         json_data = json.load(uploaded_file)
-        if process_data(json_data, category=category, append_to_existing=append_mode):
+        if process_data(json_data, append_to_existing=append_mode):
             added_count = len(json_data)
-            category_text = f" do kategorii '{category}'" if category else ""
-            st.success(f"✅ {added_count} ofert załadowano pomyślnie{category_text}!")
+            st.success(f"✅ {added_count} ofert załadowano pomyślnie!")
     except json.JSONDecodeError:
         st.error("❌ Nieprawidłowy plik JSON. Sprawdź format.")
     except Exception as e:
         st.error(f"❌ Błąd ładowania pliku: {str(e)}")
 
-def handle_json_paste(json_text, category, append_mode):
+def handle_json_paste(json_text, append_mode):
     """Handle pasted JSON data processing."""
     if json_text.strip():
         try:
             json_data = json.loads(json_text)
-            if process_data(json_data, category=category, append_to_existing=append_mode):
+            if process_data(json_data, append_to_existing=append_mode):
                 added_count = len(json_data)
-                category_text = f" do kategorii '{category}'" if category else ""
-                st.success(f"✅ {added_count} ofert załadowano pomyślnie{category_text}!")
+                st.success(f"✅ {added_count} ofert załadowano pomyślnie!")
         except json.JSONDecodeError:
             st.error("❌ Nieprawidłowy format JSON. Sprawdź swoje dane.")
         except Exception as e:

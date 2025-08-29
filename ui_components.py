@@ -78,10 +78,10 @@ def show_admin_data_input():
     
     # Category input
     st.subheader("🏷️ Zarządzanie Kategoriami")
-    category = st.text_input("Wprowadź kategorię dla przesyłanych danych:", placeholder="np. Java, Python, Data Science")
-    
     # Upload mode selection
     append_mode = st.checkbox("Dodaj do istniejących danych (unikaj duplikatów)", value=st.session_state.append_mode)
+    
+    st.info("ℹ️ **Kategoria/specjalizacja będzie automatycznie pobrana z pola 'category' w JSON**")
     st.session_state.append_mode = append_mode
     
     # Data input options
@@ -90,11 +90,11 @@ def show_admin_data_input():
     if input_method == "Prześlij plik JSON":
         uploaded_file = st.file_uploader("Prześlij plik JSON z danymi o ofertach pracy", type=['json'])
         if uploaded_file is not None:
-            handle_file_upload(uploaded_file, category, append_mode)
+            handle_file_upload(uploaded_file, append_mode)
     else:
         json_text = st.text_area("Wklej dane JSON tutaj:", height=200)
         if st.button("Załaduj Dane"):
-            handle_json_paste(json_text, category, append_mode)
+            handle_json_paste(json_text, append_mode)
     
     return category
 
