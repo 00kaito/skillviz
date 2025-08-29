@@ -488,9 +488,10 @@ class JobDataProcessor:
         # Weight mapping for skill levels
         level_weights = {
             'Beginner': 1,
-            'Regular': 2, 
-            'Senior': 3,
-            'Expert': 4,
+            'Regular': 2,
+            'Advanced': 3,
+            'Senior': 4,
+            'Expert': 5,
             'B1': 1,
             'B2': 2,
             'C1': 3,
@@ -567,9 +568,10 @@ class JobDataProcessor:
         
         level_weights = {
             'Beginner': 1,
-            'Regular': 2, 
-            'Senior': 3,
-            'Expert': 4,
+            'Regular': 2,
+            'Advanced': 3,
+            'Senior': 4,
+            'Expert': 5,
             'B1': 1,
             'B2': 2,
             'C1': 3,
