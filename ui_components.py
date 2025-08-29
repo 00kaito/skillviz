@@ -161,21 +161,36 @@ def show_sidebar_filters(auth_manager, df):
             filtered_df = filtered_df.head(50)
         
         # City filter
-        cities = ['Wszystkie'] + sorted(filtered_df['city'].unique().tolist()) if not filtered_df.empty else ['Wszystkie']
+        if not filtered_df.empty:
+            # Filter out None values before sorting
+            city_values = [x for x in filtered_df['city'].unique() if x is not None]
+            cities = ['Wszystkie'] + sorted(city_values)
+        else:
+            cities = ['Wszystkie']
         if auth_manager.is_authenticated():
             selected_city = st.selectbox("Miasto:", cities)
         else:
             selected_city = st.selectbox("Miasto:", ['Wszystkie'], disabled=True, help="Zaloguj się aby filtrować")
         
         # Experience level filter
-        exp_levels = ['Wszystkie'] + sorted(filtered_df['seniority'].unique().tolist()) if not filtered_df.empty else ['Wszystkie']
+        if not filtered_df.empty:
+            # Filter out None values before sorting
+            seniority_values = [x for x in filtered_df['seniority'].unique() if x is not None]
+            exp_levels = ['Wszystkie'] + sorted(seniority_values)
+        else:
+            exp_levels = ['Wszystkie']
         if auth_manager.is_authenticated():
             selected_exp = st.selectbox("Poziom Doświadczenia:", exp_levels)
         else:
             selected_exp = st.selectbox("Poziom Doświadczenia:", ['Wszystkie'], disabled=True, help="Zaloguj się aby filtrować")
         
         # Company filter
-        companies = ['Wszystkie'] + sorted(filtered_df['company'].unique().tolist()) if not filtered_df.empty else ['Wszystkie']
+        if not filtered_df.empty:
+            # Filter out None values before sorting
+            company_values = [x for x in filtered_df['company'].unique() if x is not None]
+            companies = ['Wszystkie'] + sorted(company_values)
+        else:
+            companies = ['Wszystkie']
         if auth_manager.is_authenticated():
             selected_company = st.selectbox("Firma:", companies)
         else:
