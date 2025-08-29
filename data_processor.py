@@ -333,7 +333,11 @@ class JobDataProcessor:
         
         # Create composite key for duplicate detection
         def create_key(row):
-            skills_str = '|'.join(sorted(row['requiredSkills'])) if row['requiredSkills'] else ''
+            # Handle skills object (new format)
+            if isinstance(row['skills'], dict):
+                skills_str = '|'.join(sorted(row['skills'].keys()))
+            else:
+                skills_str = ''
             return f"{row['role']}_{row['company']}_{row['city']}_{skills_str}".lower()
         
         existing_keys = set(existing_df.apply(create_key, axis=1))

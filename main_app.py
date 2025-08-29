@@ -15,6 +15,7 @@ from ui_components import (
     display_welcome_screen
 )
 from analytics_dashboard import display_analytics
+from api_endpoints import setup_api_routes
 
 def handle_email_verification():
     """Handle email verification from URL parameters."""
@@ -70,6 +71,9 @@ def setup_sidebar():
 def main():
     """Main application function."""
     setup_page_config()
+    
+    # Check for API requests first - this will handle API calls and stop execution if needed
+    setup_api_routes()
     
     # Initialize auth manager
     auth_manager = AuthManager()
