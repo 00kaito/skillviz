@@ -121,7 +121,7 @@ def show_user_sidebar_info():
 
 def show_guest_sidebar_info():
     """Show info section for guest users in sidebar."""
-    st.info("🔍 **Tryb Gościa**\n\nMożesz przeglądać przykładowe dane dla specjalizacji **Go** (ograniczone wyniki). Zaloguj się dla pełnego dostępu i wszystkich specjalizacji.")
+    st.info("🔍 **Tryb Gościa**\n\nMożesz przeglądać wszystkie dane dla specjalizacji **Go**. Aby uzyskać dostęp do innych specjalizacji, zaloguj się.")
 
 def show_sidebar_filters(auth_manager, df):
     """Show filters section in sidebar."""
@@ -132,16 +132,37 @@ def show_sidebar_filters(auth_manager, df):
         # Category filter
         category_options = ['all'] + st.session_state.categories
         
-        # For guests, disable the selectbox and limit to 'all'
+        # For guests, show all categories but limit access to 'go' only
         if not auth_manager.is_authenticated():
+            # Initialize guest category selection if not set
+            if 'guest_selected_category' not in st.session_state:
+                st.session_state.guest_selected_category = 'go' if 'go' in st.session_state.categories else 'all'
+            
+            # Show all categories but monitor selection
+            guest_category_options = ['go'] + [cat for cat in st.session_state.categories if cat != 'go']
+            if 'go' not in st.session_state.categories:
+                guest_category_options = ['all'] + st.session_state.categories
+            
             selected_category = st.selectbox(
                 "Specjalizacja:", 
-                ['all'], 
-                format_func=lambda x: 'Go (Przykładowe dane)',
-                disabled=True,
-                help="Zaloguj się aby uzyskać dostęp do wszystkich specjalizacji"
+                guest_category_options,
+                index=0,  # Always default to first option (go or all)
+                format_func=lambda x: {
+                    'go': 'Go (Dostępne)',
+                    'all': 'Go (Przykładowe dane)'
+                }.get(x, f"{x.title()} (Niedostępne - Zaloguj się)")
             )
-            st.session_state.selected_category = 'all'
+            
+            # Check if guest tries to select non-Go category
+            if selected_category != 'go' and selected_category != 'all':
+                st.warning("⚠️ Aby uzyskać dostęp do specjalizacji \"{}\" musisz się zalogować. Obecnie możesz przeglądać tylko dane specjalizacji Go.".format(selected_category.title()))
+                st.session_state.guest_selected_category = 'go' if 'go' in st.session_state.categories else 'all'
+                selected_category = st.session_state.guest_selected_category
+                st.rerun()
+            else:
+                st.session_state.guest_selected_category = selected_category
+            
+            st.session_state.selected_category = selected_category
         else:
             selected_category = st.selectbox(
                 "Specjalizacja:", 

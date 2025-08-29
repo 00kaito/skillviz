@@ -604,7 +604,8 @@ class JobDataProcessor:
     def get_categories(self, is_guest=False):
         """Get all available categories based on user type."""
         if is_guest:
-            return list(self.demo_categories_data.keys())
+            # Guests can see all categories but are limited to accessing only 'go'
+            return list(self.categories_data.keys()) if self.categories_data else []
         else:
             return list(self.categories_data.keys())
     
@@ -620,12 +621,18 @@ class JobDataProcessor:
         """Get data filtered by category based on user type."""
         if is_guest:
             if category is None or category == 'all':
-                return self.demo_df if self.demo_df is not None else pd.DataFrame()
+                # Guests get all 'go' data when requesting 'all'
+                if 'go' in self.categories_data:
+                    return self.categories_data['go']
+                else:
+                    return self.demo_df if self.demo_df is not None else pd.DataFrame()
             
             category_key = category.lower().strip()
-            if category_key in self.demo_categories_data:
-                return self.demo_categories_data[category_key]
+            # Guests can only access 'go' specialization data
+            if category_key == 'go' and 'go' in self.categories_data:
+                return self.categories_data['go']
             else:
+                # For any other category, return empty (they don't have access)
                 return pd.DataFrame()
         else:
             if category is None or category == 'all':

@@ -1,10 +1,11 @@
 {
-  "total_records": 789,
-  "categories_count": 3,
+  "total_records": 838,
+  "categories_count": 4,
   "categories": [
     "javascript",
     "default",
-    "html"
+    "html",
+    "go"
   ],
-  "last_updated": "2025-08-29T19:44:17.162941"
+  "last_updated": "2025-08-29T19:53:14.580076"
 }
