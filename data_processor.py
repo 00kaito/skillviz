@@ -597,7 +597,11 @@ class JobDataProcessor:
     def get_data(self, is_guest=False):
         """Get appropriate data based on user type."""
         if is_guest:
-            return self.demo_df if self.demo_df is not None else pd.DataFrame()
+            # Guests get all 'go' data, or demo data if no 'go' category exists
+            if 'go' in self.categories_data:
+                return self.categories_data['go']
+            else:
+                return self.demo_df if self.demo_df is not None else pd.DataFrame()
         else:
             return self.df if self.df is not None else pd.DataFrame()
     
