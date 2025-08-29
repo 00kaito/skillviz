@@ -72,109 +72,112 @@ class JobDataProcessor:
         import pandas as pd
         import json
         
-        # Sample job data in new format with skill proficiency levels for guest users
+        # Sample job data in new format with skill proficiency levels - Only Go specialization for guest users
         sample_jobs_json = """[
   {
-    "role": "Software Architect - Retention Engineering",
-    "company": "LeoVegas Group",
+    "role": "Senior Go Developer",
+    "company": "TechCorp Poland",
     "city": "Warszawa",
+    "employment_type": "B2B",
+    "job_time_type": "Full-time",
+    "remote": true,
+    "seniority": "Senior",
+    "salary": "16 000 - 22 000 PLN",
+    "published_date": "18.08.2025",
+    "skills": {
+      "Go": "Senior",
+      "Docker": "Senior",
+      "Kubernetes": "Regular",
+      "PostgreSQL": "Senior",
+      "REST API": "Expert",
+      "Microservices": "Senior",
+      "English": "B2"
+    },
+    "url": "https://example.com/go-developer-1"
+  },
+  {
+    "role": "Go Backend Developer",
+    "company": "Innovation Labs",
+    "city": "Kraków",
     "employment_type": "B2B",
     "job_time_type": "Full-time",
     "remote": false,
-    "seniority": "Senior",
-    "salary": "18 000 - 25 000 PLN",
-    "published_date": "18.08.2025",
-    "skills": {
-      "Java": "Senior",
-      "Spring": "Senior",
-      "Microservices": "Senior",
-      "Event-Driven Architecture": "Expert",
-      "Kotlin": "Regular",
-      "English": "B2"
-    },
-    "url": "https://justjoin.it/job-offer/leovegas-group-software-architect---retention-engineering-warszawa-architecture"
-  },
-  {
-    "role": "Senior Java Developer (Remote)",
-    "company": "Caspian One",
-    "city": "Warszawa",
-    "employment_type": "B2B",
-    "job_time_type": "Full-time",
-    "remote": true,
-    "seniority": "Senior",
-    "salary": "15 000 - 20 000 PLN",
-    "published_date": "18.08.2025",
-    "skills": {
-      "Spring Boot": "Senior",
-      "Multi-threading": "Senior",
-      "Java": "Senior",
-      "Concurrency": "Regular",
-      "English": "B2"
-    },
-    "url": "https://justjoin.it/job-offer/caspian-one-senior-java-developer-remote--warszawa-java"
-  },
-  {
-    "role": "Frontend Developer (Angular + React)",
-    "company": "emagine Polska",
-    "city": "Warszawa",
-    "employment_type": "B2B",
-    "job_time_type": "Full-time",
-    "remote": true,
-    "seniority": "Senior",
+    "seniority": "Regular",
     "salary": "12 000 - 18 000 PLN",
-    "published_date": "18.08.2025",
+    "published_date": "19.08.2025",
     "skills": {
-      "JavaScript": "Senior",
-      "React": "Senior",
-      "Angular": "Regular",
-      "TypeScript": "Senior",
-      "AWS": "Regular",
+      "Go": "Senior",
+      "gRPC": "Regular",
+      "Redis": "Regular",
+      "MongoDB": "Regular",
+      "Git": "Senior",
+      "Linux": "Regular",
       "English": "B2"
     },
-    "url": "https://justjoin.it/job-offer/emagine-polska-frontend-developer-angular-react--warszawa-javascript"
+    "url": "https://example.com/go-developer-2"
   },
   {
-    "role": "SAP MM Stream Lead",
-    "company": "Kevin Edward",
-    "city": "Warszawa",
+    "role": "Golang Architect",
+    "company": "CloudTech Solutions",
+    "city": "Gdańsk",
     "employment_type": "B2B",
     "job_time_type": "Full-time",
     "remote": true,
     "seniority": "Expert",
     "salary": "20 000 - 28 000 PLN",
-    "published_date": "18.08.2025",
+    "published_date": "20.08.2025",
     "skills": {
-      "SAP MM": "Expert",
-      "SAP EWM": "Senior",
-      "SAP TM": "Senior",
-      "Agile": "Regular",
-      "Ariba": "Regular",
-      "S4 Transformation": "Senior",
-      "Integration": "Senior",
-      "English": "B2"
+      "Go": "Expert",
+      "AWS": "Senior",
+      "Terraform": "Senior",
+      "Microservices": "Expert",
+      "Event Sourcing": "Senior",
+      "CQRS": "Regular",
+      "English": "C1"
     },
-    "url": "https://justjoin.it/job-offer/kevin-edward-sap-mm-stream-lead-warszawa-erp"
+    "url": "https://example.com/go-architect-1"
   },
   {
-    "role": "SAP PP Stream Lead",
-    "company": "Kevin Edward",
-    "city": "Warszawa",
-    "employment_type": "B2B",
+    "role": "Go Developer (FinTech)",
+    "company": "FinanceFlow",
+    "city": "Wrocław",
+    "employment_type": "UoP",
     "job_time_type": "Full-time",
     "remote": true,
-    "seniority": "Expert",
-    "salary": "20 000 - 28 000 PLN",
-    "published_date": "18.08.2025",
+    "seniority": "Senior",
+    "salary": "14 000 - 20 000 PLN",
+    "published_date": "21.08.2025",
     "skills": {
-      "SAP PP": "Expert",
-      "S/4 Transformations": "Senior",
-      "Integration": "Senior",
-      "Agile": "Regular",
-      "Signavio": "Regular",
-      "Celonis": "Regular",
+      "Go": "Senior",
+      "Blockchain": "Regular",
+      "PostgreSQL": "Senior",
+      "RabbitMQ": "Regular",
+      "Testing": "Senior",
+      "CI/CD": "Regular",
       "English": "B2"
     },
-    "url": "https://justjoin.it/job-offer/kevin-edward-sap-pp-stream-lead-warszawa-erp"
+    "url": "https://example.com/go-fintech-1"
+  },
+  {
+    "role": "Junior Go Developer",
+    "company": "StartupHub",
+    "city": "Warszawa",
+    "employment_type": "UoP",
+    "job_time_type": "Full-time",
+    "remote": false,
+    "seniority": "Junior",
+    "salary": "8 000 - 12 000 PLN",
+    "published_date": "22.08.2025",
+    "skills": {
+      "Go": "Regular",
+      "Git": "Regular",
+      "SQL": "Regular",
+      "REST API": "Regular",
+      "JSON": "Regular",
+      "Linux": "Beginner",
+      "English": "B1"
+    },
+    "url": "https://example.com/go-junior-1"
   }]"""
         
         # Process sample data

@@ -121,7 +121,7 @@ def show_user_sidebar_info():
 
 def show_guest_sidebar_info():
     """Show info section for guest users in sidebar."""
-    st.info("🔍 **Tryb Gościa**\n\nMożesz przeglądać ograniczone dane (50 wyników). Zaloguj się dla pełnego dostępu i wszystkich funkcji.")
+    st.info("🔍 **Tryb Gościa**\n\nMożesz przeglądać przykładowe dane dla specjalizacji **Go** (ograniczone wyniki). Zaloguj się dla pełnego dostępu i wszystkich specjalizacji.")
 
 def show_sidebar_filters(auth_manager, df):
     """Show filters section in sidebar."""
@@ -137,9 +137,9 @@ def show_sidebar_filters(auth_manager, df):
             selected_category = st.selectbox(
                 "Specjalizacja:", 
                 ['all'], 
-                format_func=lambda x: 'Wszystkie Specjalizacje (Ograniczone do 50)',
+                format_func=lambda x: 'Go (Przykładowe dane)',
                 disabled=True,
-                help="Zaloguj się aby filtrować według specjalizacji"
+                help="Zaloguj się aby uzyskać dostęp do wszystkich specjalizacji"
             )
             st.session_state.selected_category = 'all'
         else:
