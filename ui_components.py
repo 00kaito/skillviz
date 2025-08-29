@@ -168,14 +168,14 @@ def show_sidebar_filters(auth_manager, df):
             selected_city = st.selectbox("Miasto:", ['Wszystkie'], disabled=True, help="Zaloguj się aby filtrować")
         
         # Experience level filter
-        exp_levels = ['Wszystkie'] + sorted(filtered_df['experienceLevel'].unique().tolist()) if not filtered_df.empty else ['Wszystkie']
+        exp_levels = ['Wszystkie'] + sorted(filtered_df['seniority'].unique().tolist()) if not filtered_df.empty else ['Wszystkie']
         if auth_manager.is_authenticated():
             selected_exp = st.selectbox("Poziom Doświadczenia:", exp_levels)
         else:
             selected_exp = st.selectbox("Poziom Doświadczenia:", ['Wszystkie'], disabled=True, help="Zaloguj się aby filtrować")
         
         # Company filter
-        companies = ['Wszystkie'] + sorted(filtered_df['companyName'].unique().tolist()) if not filtered_df.empty else ['Wszystkie']
+        companies = ['Wszystkie'] + sorted(filtered_df['company'].unique().tolist()) if not filtered_df.empty else ['Wszystkie']
         if auth_manager.is_authenticated():
             selected_company = st.selectbox("Firma:", companies)
         else:
@@ -209,12 +209,12 @@ def show_sidebar_filters(auth_manager, df):
             if selected_city != 'Wszystkie':
                 filtered_df = filtered_df[filtered_df['city'] == selected_city]
             if selected_exp != 'Wszystkie':
-                filtered_df = filtered_df[filtered_df['experienceLevel'] == selected_exp]
+                filtered_df = filtered_df[filtered_df['seniority'] == selected_exp]
             if selected_company != 'Wszystkie':
-                filtered_df = filtered_df[filtered_df['companyName'] == selected_company]
+                filtered_df = filtered_df[filtered_df['company'] == selected_company]
             
             # Apply date filter
-            if selected_date_range != 'all' and 'publishedAt' in filtered_df.columns:
+            if selected_date_range != 'all' and 'published_date' in filtered_df.columns:
                 filtered_df = apply_date_filter(filtered_df, selected_date_range)
         
         total_jobs = len(df) if df is not None and not df.empty else 0
@@ -272,7 +272,7 @@ def display_data_overview(display_df):
         cities_count = display_df['city'].nunique() if not display_df.empty else 0
         st.metric("Miasta", cities_count)
     with col4:
-        companies_count = display_df['companyName'].nunique() if not display_df.empty else 0
+        companies_count = display_df['company'].nunique() if not display_df.empty else 0
         st.metric("Firmy", companies_count)
 
 def show_category_info(auth_manager):

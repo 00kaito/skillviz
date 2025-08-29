@@ -52,7 +52,7 @@ class JobMarketVisualizer:
         if df is None:
             df = self.df
             
-        exp_counts = df['experienceLevel'].value_counts()
+        exp_counts = df['seniority'].value_counts()
         
         if exp_counts.empty:
             return self._create_empty_chart("Brak danych o poziomach doświadczenia")
@@ -81,11 +81,11 @@ class JobMarketVisualizer:
         top_skills_list = [skill for skill, _ in Counter(all_skills).most_common(top_skills)]
         
         # Create matrix
-        exp_levels = df['experienceLevel'].unique()
+        exp_levels = df['seniority'].unique()
         matrix_data = []
         
         for exp_level in exp_levels:
-            exp_df = df[df['experienceLevel'] == exp_level]
+            exp_df = df[df['seniority'] == exp_level]
             row_data = []
             
             for skill in top_skills_list:
@@ -146,7 +146,7 @@ class JobMarketVisualizer:
         if df is None:
             df = self.df
             
-        company_counts = df['companyName'].value_counts().head(top_n)
+        company_counts = df['company'].value_counts().head(top_n)
         
         if company_counts.empty:
             return self._create_empty_chart("Brak danych o firmach")
@@ -174,10 +174,12 @@ class JobMarketVisualizer:
         if df is None:
             df = self.df
             
-        if 'workplaceType' not in df.columns:
+        if 'remote' not in df.columns:
             return self._create_empty_chart("Brak danych o typach miejsca pracy")
         
-        workplace_counts = df['workplaceType'].value_counts()
+        # Convert boolean remote to categorical for visualization
+        df['workplace_type'] = df['remote'].map({True: 'Remote', False: 'Stacjonarna/Hybrydowa'})
+        workplace_counts = df['workplace_type'].value_counts()
         
         if workplace_counts.empty:
             return self._create_empty_chart("Brak danych o typach miejsca pracy")
@@ -250,8 +252,8 @@ class JobMarketVisualizer:
         chart_data = []
         
         for skill in top_skills_list:
-            for exp_level in df['experienceLevel'].unique():
-                exp_df = df[df['experienceLevel'] == exp_level]
+            for exp_level in df['seniority'].unique():
+                exp_df = df[df['seniority'] == exp_level]
                 count = sum(1 for skills_list in exp_df['requiredSkills'] if skill in skills_list)
                 
                 chart_data.append({
@@ -407,7 +409,8 @@ class JobMarketVisualizer:
             return self._create_empty_chart("Brak danych o poziomach umiejętności")
         
         # Get top skills overall for filtering
-        top_skills = skills_by_level.groupby('skill')['count'].sum().nlargest(15).index
+        top_skills_series = skills_by_level.groupby('skill')['count'].sum().nlargest(15)
+        top_skills = top_skills_series.index.tolist()
         filtered_data = skills_by_level[skills_by_level['skill'].isin(top_skills)]
         
         fig = px.bar(

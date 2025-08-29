@@ -38,11 +38,17 @@ Preferred communication style: Simple, everyday language.
 
 ### Data Schema
 The application expects JSON data with the following required fields:
-- `title`: Job title/position
-- `companyName`: Company offering the position
+- `role`: Job title/position
+- `company`: Company offering the position
 - `city`: Job location
-- `experienceLevel`: Required experience level
-- `requiredSkills`: Array of technical skills required
+- `seniority`: Required seniority level (e.g., Junior, Mid, Senior, Expert)
+- `skills`: Object containing technical skills with proficiency levels (e.g., {"Python": "Senior", "SQL": "Regular"})
+- `employment_type`: Type of employment (e.g., B2B, UoP)
+- `job_time_type`: Working time (e.g., Full-time, Part-time)
+- `remote`: Boolean indicating if position is remote
+- `salary`: Salary range (e.g., "10 000 - 16 000 PLN")
+- `published_date`: Publication date in DD.MM.YYYY format
+- `url`: Link to job posting
 
 ## External Dependencies
 
