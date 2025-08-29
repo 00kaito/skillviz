@@ -1,8 +1,9 @@
 {
-  "total_records": 365,
-  "categories_count": 1,
+  "total_records": 770,
+  "categories_count": 2,
   "categories": [
-    "javascript"
+    "javascript",
+    "default"
   ],
-  "last_updated": "2025-08-29T18:23:41.414975"
+  "last_updated": "2025-08-29T19:29:19.874488"
 }
