@@ -457,7 +457,7 @@ class JobMarketVisualizer:
         top_skills = weight_analysis.head(top_n)
         
         # Update title based on exclusions
-        title = 'Macierz Ważności Umiejętności: Częstotliwość vs Średni Poziom'
+        title = 'Macierz Ważności Umiejętności: Częstotliwość vs Ważność'
         if excluded_skills:
             excluded_count = len(excluded_skills)
             title += f' (wykluczono {excluded_count} umiejętności)'
@@ -465,22 +465,27 @@ class JobMarketVisualizer:
         fig = px.scatter(
             top_skills,
             x='frequency',
-            y='avg_weight',
-            size='importance_score',
+            y='importance_score',
+            size='frequency',
             hover_name='skill',
             title=title,
             labels={
                 'frequency': 'Częstotliwość w Ofertach', 
-                'avg_weight': 'Średni Wymagany Poziom',
-                'importance_score': 'Ocena Ważności'
+                'importance_score': 'Ocena Ważności',
+                'avg_weight': 'Średni Wymagany Poziom'
             },
-            color='importance_score',
-            color_continuous_scale='viridis'
+            color='avg_weight',
+            color_continuous_scale='RdYlBu_r',
+            hover_data=['avg_weight']
         )
         
         fig.update_layout(
             height=500,
-            showlegend=False
+            showlegend=False,
+            coloraxis_colorbar=dict(
+                title="Średni Wymagany<br>Poziom",
+                title_font_size=12
+            )
         )
         
         return fig
