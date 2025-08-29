@@ -110,8 +110,24 @@ def show_admin_data_management():
                 st.write(f"- {cat.title()}: {len(cat_data)} ofert")
         
         # Clear data options
-        if st.button("🗑️ Wyczyść Wszystkie Dane", type="secondary"):
-            clear_all_data()
+        if 'show_clear_confirmation' not in st.session_state:
+            st.session_state.show_clear_confirmation = False
+        
+        if not st.session_state.show_clear_confirmation:
+            if st.button("🗑️ Wyczyść Wszystkie Dane", type="secondary"):
+                st.session_state.show_clear_confirmation = True
+                st.rerun()
+        else:
+            st.warning("⚠️ **Czy na pewno chcesz usunąć wszystkie dane?**\n\nTa operacja nie może być cofnięta!")
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("✅ Tak, usuń", type="primary"):
+                    st.session_state.show_clear_confirmation = False
+                    clear_all_data()
+            with col2:
+                if st.button("❌ Anuluj", type="secondary"):
+                    st.session_state.show_clear_confirmation = False
+                    st.rerun()
 
 def show_user_sidebar_info():
     """Show info section for regular users in sidebar."""
