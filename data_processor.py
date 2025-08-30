@@ -399,6 +399,13 @@ class JobDataProcessor:
                 try:
                     min_sal = int(re.sub(r'\s+', '', numbers[0]))
                     max_sal = int(re.sub(r'\s+', '', numbers[1]))
+                    
+                    # Convert hourly rates to monthly (if below 300 PLN, treat as hourly * 168)
+                    if min_sal < 300:
+                        min_sal = min_sal * 168
+                    if max_sal < 300:
+                        max_sal = max_sal * 168
+                    
                     avg_sal = (min_sal + max_sal) / 2
                     return pd.Series({'salary_min': min_sal, 'salary_max': max_sal, 'salary_avg': avg_sal, 'salary_currency': currency})
                 except:
@@ -407,6 +414,11 @@ class JobDataProcessor:
                 # Single value
                 try:
                     sal = int(re.sub(r'\s+', '', numbers[0]))
+                    
+                    # Convert hourly rates to monthly (if below 300 PLN, treat as hourly * 168)
+                    if sal < 300:
+                        sal = sal * 168
+                    
                     return pd.Series({'salary_min': sal, 'salary_max': sal, 'salary_avg': sal, 'salary_currency': currency})
                 except:
                     pass
