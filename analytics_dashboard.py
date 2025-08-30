@@ -398,7 +398,7 @@ def show_salary_analysis(display_df, visualizer, processor):
     st.subheader("📋 Szczegółowe Statystyki Wynagrodzeń według Umiejętności")
     
     # Get detailed salary correlation data
-    detailed_salary_data = processor.get_skills_salary_correlation(salary_df, min_occurrences=2)
+    detailed_salary_data = processor.get_skills_salary_correlation(salary_df, min_occurrences=3)
     
     if not detailed_salary_data.empty:
         # Display top 20 results

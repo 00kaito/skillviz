@@ -826,7 +826,7 @@ class JobDataProcessor:
         # Calculate statistics for each skill level
         result_data = []
         for level, salaries in skill_level_salary.items():
-            if len(salaries) >= 2:  # Only include levels with enough data
+            if len(salaries) >= 3:  # Only include levels with at least 3 data points
                 result_data.append({
                     'skill_level': level,
                     'avg_salary': round(sum(salaries) / len(salaries), 0),
@@ -881,7 +881,7 @@ class JobDataProcessor:
                     skill_salaries.append(salary)
                     skill_counts.append(has_skill)
             
-            if len(skill_salaries) > 5:  # Need enough data points
+            if len(skill_salaries) >= 3 and sum(skill_counts) >= 3:  # Need at least 3 occurrences
                 correlation = np.corrcoef(skill_counts, skill_salaries)[0, 1]
                 if not np.isnan(correlation):
                     correlations[skill] = correlation
@@ -1005,7 +1005,7 @@ class JobDataProcessor:
                     skill_indicator.append(has_skill)
                     salaries.append(row['salary_avg'])
             
-            if len(skill_indicator) >= 10 and sum(skill_indicator) >= 3:  # Need enough positive cases
+            if len(skill_indicator) >= 3 and sum(skill_indicator) >= 3:  # Need at least 3 positive cases
                 x = np.array(skill_indicator)
                 y = np.array(salaries)
                 
