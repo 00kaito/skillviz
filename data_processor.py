@@ -288,6 +288,10 @@ class JobDataProcessor:
             if df['published_date'].isna().all():
                 df['published_date'] = pd.to_datetime(df['published_date'], errors='coerce')
         
+        # Parse and normalize salary if present
+        if 'salary' in df.columns:
+            df = self._normalize_salary(df)
+        
         # Add derived columns
         df['skillsCount'] = df['skills'].apply(len)
         df['requiredSkills'] = df['skills'].apply(lambda x: list(x.keys()) if isinstance(x, dict) else [])
@@ -366,6 +370,53 @@ class JobDataProcessor:
                 normalized[clean_skill] = clean_level
         
         return normalized
+    
+    def _normalize_salary(self, df):
+        """Parse and normalize salary data."""
+        import re
+        
+        def parse_salary(salary_str):
+            """Parse salary string to extract min, max, avg and currency."""
+            if pd.isna(salary_str) or not isinstance(salary_str, str):
+                return pd.Series({'salary_min': None, 'salary_max': None, 'salary_avg': None, 'salary_currency': None})
+            
+            salary_str = str(salary_str).strip()
+            
+            # Extract currency (PLN, EUR, USD, etc.)
+            currency_match = re.search(r'(PLN|EUR|USD|zł|€|\$)', salary_str, re.IGNORECASE)
+            currency = currency_match.group(1) if currency_match else 'PLN'
+            
+            # Extract numbers (handle different formats)
+            # Remove currency symbols and normalize spaces
+            clean_str = re.sub(r'[PLNEURUSDzł€\$]', '', salary_str, flags=re.IGNORECASE).strip()
+            
+            # Find numbers with potential ranges
+            numbers = re.findall(r'(\d+(?:\s?\d{3})*(?:\s?\d{3})*)', clean_str)
+            
+            if len(numbers) >= 2:
+                # Range format (e.g., "10 000 - 16 000 PLN")
+                try:
+                    min_sal = int(re.sub(r'\s+', '', numbers[0]))
+                    max_sal = int(re.sub(r'\s+', '', numbers[1]))
+                    avg_sal = (min_sal + max_sal) / 2
+                    return pd.Series({'salary_min': min_sal, 'salary_max': max_sal, 'salary_avg': avg_sal, 'salary_currency': currency})
+                except:
+                    pass
+            elif len(numbers) == 1:
+                # Single value
+                try:
+                    sal = int(re.sub(r'\s+', '', numbers[0]))
+                    return pd.Series({'salary_min': sal, 'salary_max': sal, 'salary_avg': sal, 'salary_currency': currency})
+                except:
+                    pass
+            
+            return pd.Series({'salary_min': None, 'salary_max': None, 'salary_avg': None, 'salary_currency': None})
+        
+        # Apply salary parsing
+        salary_data = df['salary'].apply(parse_salary)
+        df = pd.concat([df, salary_data], axis=1)
+        
+        return df
     
     def _remove_duplicates(self, new_df, existing_df):
         """Remove duplicates from new_df based on existing_df."""
@@ -631,6 +682,162 @@ class JobDataProcessor:
                 count += 1
         
         return total_score
+    
+    def get_salary_analysis(self, df=None):
+        """Get comprehensive salary analysis."""
+        if df is None:
+            df = self.df
+        
+        if df.empty or 'salary_avg' not in df.columns:
+            return pd.DataFrame()
+        
+        # Filter out rows without salary data
+        salary_df = df.dropna(subset=['salary_avg']).copy()
+        
+        if salary_df.empty:
+            return pd.DataFrame()
+        
+        analysis_results = []
+        
+        # Basic salary statistics
+        basic_stats = {
+            'metric': 'Podstawowe Statystyki',
+            'min_salary': salary_df['salary_min'].min(),
+            'max_salary': salary_df['salary_max'].max(),
+            'avg_salary': salary_df['salary_avg'].mean(),
+            'median_salary': salary_df['salary_avg'].median(),
+            'count': len(salary_df)
+        }
+        analysis_results.append(basic_stats)
+        
+        return pd.DataFrame(analysis_results)
+    
+    def get_skills_salary_correlation(self, df=None, min_occurrences=3):
+        """Analyze salary correlation with skills."""
+        if df is None:
+            df = self.df
+        
+        if df.empty or 'salary_avg' not in df.columns:
+            return pd.DataFrame()
+        
+        # Filter out rows without salary data
+        salary_df = df.dropna(subset=['salary_avg']).copy()
+        
+        if salary_df.empty:
+            return pd.DataFrame()
+        
+        skill_salary_data = defaultdict(list)
+        
+        # Collect salary data for each skill
+        for _, row in salary_df.iterrows():
+            skills_dict = row['skills']
+            salary = row['salary_avg']
+            
+            if isinstance(skills_dict, dict) and pd.notna(salary):
+                for skill, level in skills_dict.items():
+                    skill_salary_data[skill].append(salary)
+        
+        # Calculate statistics for each skill
+        result_data = []
+        for skill, salaries in skill_salary_data.items():
+            if len(salaries) >= min_occurrences:  # Only include skills with enough data
+                avg_salary = sum(salaries) / len(salaries)
+                min_salary = min(salaries)
+                max_salary = max(salaries)
+                median_salary = sorted(salaries)[len(salaries) // 2]
+                count = len(salaries)
+                
+                result_data.append({
+                    'skill': skill,
+                    'avg_salary': round(avg_salary, 0),
+                    'median_salary': round(median_salary, 0),
+                    'min_salary': round(min_salary, 0),
+                    'max_salary': round(max_salary, 0),
+                    'count': count,
+                    'salary_range': round(max_salary - min_salary, 0)
+                })
+        
+        result_df = pd.DataFrame(result_data)
+        if not result_df.empty:
+            result_df = result_df.sort_values('avg_salary', ascending=False)
+        
+        return result_df
+    
+    def get_seniority_salary_analysis(self, df=None):
+        """Analyze salary by seniority level."""
+        if df is None:
+            df = self.df
+        
+        if df.empty or 'salary_avg' not in df.columns:
+            return pd.DataFrame()
+        
+        # Filter out rows without salary data
+        salary_df = df.dropna(subset=['salary_avg']).copy()
+        
+        if salary_df.empty:
+            return pd.DataFrame()
+        
+        # Group by seniority
+        seniority_groups = salary_df.groupby('seniority')['salary_avg']
+        
+        result_data = []
+        for seniority, salaries in seniority_groups:
+            result_data.append({
+                'seniority': seniority,
+                'avg_salary': round(salaries.mean(), 0),
+                'median_salary': round(salaries.median(), 0),
+                'min_salary': round(salaries.min(), 0),
+                'max_salary': round(salaries.max(), 0),
+                'count': len(salaries)
+            })
+        
+        result_df = pd.DataFrame(result_data)
+        if not result_df.empty:
+            result_df = result_df.sort_values('avg_salary', ascending=False)
+        
+        return result_df
+    
+    def get_salary_by_skill_level(self, df=None):
+        """Analyze salary by skill proficiency level."""
+        if df is None:
+            df = self.df
+        
+        if df.empty or 'salary_avg' not in df.columns:
+            return pd.DataFrame()
+        
+        # Filter out rows without salary data
+        salary_df = df.dropna(subset=['salary_avg']).copy()
+        
+        if salary_df.empty:
+            return pd.DataFrame()
+        
+        skill_level_salary = defaultdict(list)
+        
+        # Collect salary data for each skill level
+        for _, row in salary_df.iterrows():
+            skills_dict = row['skills']
+            salary = row['salary_avg']
+            
+            if isinstance(skills_dict, dict) and pd.notna(salary):
+                for skill, level in skills_dict.items():
+                    skill_level_salary[level].append(salary)
+        
+        # Calculate statistics for each skill level
+        result_data = []
+        for level, salaries in skill_level_salary.items():
+            if len(salaries) >= 2:  # Only include levels with enough data
+                result_data.append({
+                    'skill_level': level,
+                    'avg_salary': round(sum(salaries) / len(salaries), 0),
+                    'median_salary': round(sorted(salaries)[len(salaries) // 2], 0),
+                    'count': len(salaries)
+                })
+        
+        result_df = pd.DataFrame(result_data)
+        if not result_df.empty:
+            result_df = result_df.sort_values('avg_salary', ascending=False)
+        
+        return result_df
     
     def get_data(self, is_guest=False):
         """Get appropriate data based on user type."""

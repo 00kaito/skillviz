@@ -490,6 +490,181 @@ class JobMarketVisualizer:
         
         return fig
     
+    def create_skills_salary_correlation_chart(self, processor, df=None, top_n=15):
+        """Create a bar chart showing average salary by skill."""
+        if df is None:
+            df = self.df
+        
+        # Get salary correlation data
+        salary_data = processor.get_skills_salary_correlation(df)
+        
+        if salary_data.empty:
+            return self._create_empty_chart("Brak danych o wynagrodzeniach dla umiejętności")
+        
+        # Take top N skills by average salary
+        top_skills_salary = salary_data.head(top_n)
+        
+        fig = px.bar(
+            top_skills_salary,
+            x='avg_salary',
+            y='skill',
+            orientation='h',
+            title=f'Top {top_n} Najlepiej Płacących Umiejętności',
+            labels={'avg_salary': 'Średnie Wynagrodzenie (PLN)', 'skill': 'Umiejętność'},
+            color='avg_salary',
+            color_continuous_scale='viridis',
+            text='avg_salary'
+        )
+        
+        fig.update_traces(texttemplate='%{text:,.0f} PLN', textposition='inside')
+        fig.update_layout(
+            height=600,
+            yaxis={'categoryorder': 'total ascending'},
+            showlegend=False
+        )
+        
+        return fig
+    
+    def create_seniority_salary_chart(self, processor, df=None):
+        """Create a bar chart showing average salary by seniority level."""
+        if df is None:
+            df = self.df
+        
+        # Get seniority salary data
+        salary_data = processor.get_seniority_salary_analysis(df)
+        
+        if salary_data.empty:
+            return self._create_empty_chart("Brak danych o wynagrodzeniach według doświadczenia")
+        
+        fig = px.bar(
+            salary_data,
+            x='seniority',
+            y='avg_salary',
+            title='Średnie Wynagrodzenia według Poziomu Doświadczenia',
+            labels={'seniority': 'Poziom Doświadczenia', 'avg_salary': 'Średnie Wynagrodzenie (PLN)'},
+            color='avg_salary',
+            color_continuous_scale='blues',
+            text='avg_salary'
+        )
+        
+        fig.update_traces(texttemplate='%{text:,.0f} PLN', textposition='outside')
+        fig.update_layout(
+            height=400,
+            showlegend=False
+        )
+        
+        return fig
+    
+    def create_skill_level_salary_chart(self, processor, df=None):
+        """Create a bar chart showing average salary by skill proficiency level."""
+        if df is None:
+            df = self.df
+        
+        # Get skill level salary data
+        salary_data = processor.get_salary_by_skill_level(df)
+        
+        if salary_data.empty:
+            return self._create_empty_chart("Brak danych o wynagrodzeniach według poziomu biegłości")
+        
+        fig = px.bar(
+            salary_data,
+            x='skill_level',
+            y='avg_salary',
+            title='Średnie Wynagrodzenia według Poziomu Biegłości w Umiejętnościach',
+            labels={'skill_level': 'Poziom Biegłości', 'avg_salary': 'Średnie Wynagrodzenie (PLN)'},
+            color='avg_salary',
+            color_continuous_scale='oranges',
+            text='avg_salary'
+        )
+        
+        fig.update_traces(texttemplate='%{text:,.0f} PLN', textposition='outside')
+        fig.update_layout(
+            height=400,
+            showlegend=False
+        )
+        
+        return fig
+    
+    def create_salary_distribution_chart(self, df=None):
+        """Create a histogram showing salary distribution."""
+        if df is None:
+            df = self.df
+        
+        if 'salary_avg' not in df.columns:
+            return self._create_empty_chart("Brak danych o wynagrodzeniach")
+        
+        # Filter out rows without salary data
+        salary_df = df.dropna(subset=['salary_avg'])
+        
+        if salary_df.empty:
+            return self._create_empty_chart("Brak danych o wynagrodzeniach")
+        
+        fig = px.histogram(
+            salary_df,
+            x='salary_avg',
+            nbins=20,
+            title='Rozkład Wynagrodzeń',
+            labels={'salary_avg': 'Wynagrodzenie (PLN)', 'count': 'Liczba Ofert'},
+            color_discrete_sequence=['#1f77b4']
+        )
+        
+        fig.update_layout(
+            height=400,
+            showlegend=False
+        )
+        
+        return fig
+    
+    def create_salary_range_chart(self, processor, df=None, top_n=10):
+        """Create a chart showing salary ranges for top paying skills."""
+        if df is None:
+            df = self.df
+        
+        # Get salary correlation data
+        salary_data = processor.get_skills_salary_correlation(df)
+        
+        if salary_data.empty:
+            return self._create_empty_chart("Brak danych o zakresach wynagrodzeń")
+        
+        # Take top N skills by average salary
+        top_skills_salary = salary_data.head(top_n)
+        
+        fig = go.Figure()
+        
+        for _, row in top_skills_salary.iterrows():
+            fig.add_trace(go.Scatter(
+                x=[row['min_salary'], row['max_salary']],
+                y=[row['skill'], row['skill']],
+                mode='lines+markers',
+                line=dict(width=4),
+                marker=dict(size=8),
+                name=row['skill'],
+                text=[f"Min: {row['min_salary']:,.0f} PLN", f"Max: {row['max_salary']:,.0f} PLN"],
+                hovertemplate='%{text}<extra></extra>'
+            ))
+            
+            # Add average salary point
+            fig.add_trace(go.Scatter(
+                x=[row['avg_salary']],
+                y=[row['skill']],
+                mode='markers',
+                marker=dict(size=12, color='red', symbol='diamond'),
+                name=f"{row['skill']} (średnia)",
+                text=[f"Średnia: {row['avg_salary']:,.0f} PLN"],
+                hovertemplate='%{text}<extra></extra>',
+                showlegend=False
+            ))
+        
+        fig.update_layout(
+            title=f'Zakresy Wynagrodzeń dla Top {top_n} Najlepiej Płacących Umiejętności',
+            xaxis_title='Wynagrodzenie (PLN)',
+            yaxis_title='Umiejętność',
+            height=500,
+            showlegend=False
+        )
+        
+        return fig
+    
     def _create_empty_chart(self, message):
         """Create an empty chart with a message."""
         fig = go.Figure()

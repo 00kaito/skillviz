@@ -57,12 +57,13 @@ def display_analytics():
 
 def show_analytics_tabs(display_df, visualizer, processor):
     """Show the main analytics tabs."""
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         "📊 Analiza Umiejętności", 
         "🎯 Poziomy Doświadczenia", 
         "🌍 Analiza Lokalizacji", 
         "🏢 Analiza Firm", 
-        "📈 Trendy Rynkowe"
+        "📈 Trendy Rynkowe",
+        "💰 Analiza Dochodów"
     ])
     
     with tab1:
@@ -79,6 +80,9 @@ def show_analytics_tabs(display_df, visualizer, processor):
     
     with tab5:
         show_trends_analysis(display_df, visualizer, processor)
+    
+    with tab6:
+        show_salary_analysis(display_df, visualizer, processor)
 
 def show_skills_analysis(display_df, visualizer, processor):
     """Show skills analysis tab content."""
@@ -223,3 +227,109 @@ def show_trends_analysis(display_df, visualizer, processor):
     
     for key, value in summary_stats.items():
         st.write(f"**{key}:** {value}")
+
+def show_salary_analysis(display_df, visualizer, processor):
+    """Show salary analysis tab content."""
+    st.header("Analiza Dochodów")
+    
+    # Check if salary data is available
+    if 'salary_avg' not in display_df.columns or display_df['salary_avg'].isna().all():
+        st.warning("⚠️ Brak danych o wynagrodzeniach do analizy. Upewnij się, że przesłane dane zawierają pole 'salary' z informacjami o wynagrodzeniach.")
+        return
+    
+    # Filter out rows without salary data for counts
+    salary_df = display_df.dropna(subset=['salary_avg'])
+    
+    if salary_df.empty:
+        st.warning("⚠️ Nie znaleziono poprawnych danych o wynagrodzeniach do analizy.")
+        return
+    
+    # Basic salary statistics
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        avg_salary = salary_df['salary_avg'].mean()
+        st.metric("Średnie Wynagrodzenie", f"{avg_salary:,.0f} PLN")
+    
+    with col2:
+        median_salary = salary_df['salary_avg'].median()
+        st.metric("Mediana Wynagrodzeń", f"{median_salary:,.0f} PLN")
+    
+    with col3:
+        min_salary = salary_df['salary_min'].min()
+        max_salary = salary_df['salary_max'].max()
+        st.metric("Zakres", f"{min_salary:,.0f} - {max_salary:,.0f} PLN")
+    
+    with col4:
+        st.metric("Ofert z danymi o wynagrodzeniach", f"{len(salary_df)} z {len(display_df)}")
+    
+    st.divider()
+    
+    # Main salary analysis charts
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("💼 Najlepiej Płacące Umiejętności")
+        if visualizer:
+            fig_skills_salary = visualizer.create_skills_salary_correlation_chart(processor, salary_df)
+            st.plotly_chart(fig_skills_salary, width='stretch')
+    
+    with col2:
+        st.subheader("📊 Wynagrodzenia według Doświadczenia")
+        if visualizer:
+            fig_seniority_salary = visualizer.create_seniority_salary_chart(processor, salary_df)
+            st.plotly_chart(fig_seniority_salary, width='stretch')
+    
+    st.divider()
+    
+    # Additional salary analysis
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("🎯 Wynagrodzenia według Poziomu Biegłości")
+        if visualizer:
+            fig_skill_level_salary = visualizer.create_skill_level_salary_chart(processor, salary_df)
+            st.plotly_chart(fig_skill_level_salary, width='stretch')
+    
+    with col2:
+        st.subheader("📈 Rozkład Wynagrodzeń")
+        if visualizer:
+            fig_salary_dist = visualizer.create_salary_distribution_chart(salary_df)
+            st.plotly_chart(fig_salary_dist, width='stretch')
+    
+    st.divider()
+    
+    # Salary ranges chart
+    st.subheader("📍 Zakresy Wynagrodzeń dla Najlepiej Płacących Umiejętności")
+    if visualizer:
+        fig_salary_ranges = visualizer.create_salary_range_chart(processor, salary_df)
+        st.plotly_chart(fig_salary_ranges, width='stretch')
+    
+    st.divider()
+    
+    # Detailed salary statistics table
+    st.subheader("📋 Szczegółowe Statystyki Wynagrodzeń według Umiejętności")
+    
+    # Get detailed salary correlation data
+    detailed_salary_data = processor.get_skills_salary_correlation(salary_df, min_occurrences=2)
+    
+    if not detailed_salary_data.empty:
+        # Display top 20 results
+        st.dataframe(
+            detailed_salary_data.head(20),
+            width='stretch',
+            column_config={
+                "skill": st.column_config.TextColumn("Umiejętność"),
+                "avg_salary": st.column_config.NumberColumn("Średnie Wynagrodzenie", format="%.0f PLN"),
+                "median_salary": st.column_config.NumberColumn("Mediana", format="%.0f PLN"),
+                "min_salary": st.column_config.NumberColumn("Minimum", format="%.0f PLN"),
+                "max_salary": st.column_config.NumberColumn("Maksimum", format="%.0f PLN"),
+                "count": st.column_config.NumberColumn("Liczba Ofert"),
+                "salary_range": st.column_config.NumberColumn("Zakres", format="%.0f PLN")
+            }
+        )
+        
+        if len(detailed_salary_data) > 20:
+            st.info(f"Wyświetlono top 20 umiejętności z {len(detailed_salary_data)} dostępnych.")
+    else:
+        st.warning("Brak szczegółowych danych o wynagrodzeniach do wyświetlenia.")
