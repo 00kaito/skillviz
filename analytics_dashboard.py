@@ -489,14 +489,22 @@ def show_salary_analysis(display_df, visualizer, processor):
             - Wartości od -1.0 do +1.0
             - +1.0 = perfekcyjna korelacja dodatnia (umiejętność = wyższe zarobki)
             - 0.0 = brak korelacji
-            - -1.0 = korelacja ujemna (rzadkie w praktyce)
-            - Im większa wartość, tym silniejszy związek
+            - -1.0 = perfekcyjna korelacja ujemna (umiejętność = niższe zarobki)
+            - Im większa wartość bezwzględna, tym silniejszy związek
             
             **Interpretacja:**
-            - >0.5: Silna pozytywna korelacja
-            - 0.3-0.5: Umiarkowana korelacja  
-            - 0.1-0.3: Słaba korelacja
-            - <0.1: Bardzo słaba/brak korelacji
+            - >0.5: Silna pozytywna korelacja (wyższe zarobki)
+            - 0.3-0.5: Umiarkowana pozytywna korelacja  
+            - 0.1-0.3: Słaba pozytywna korelacja
+            - -0.1 do 0.1: Brak korelacji
+            - -0.3 do -0.1: Słaba negatywna korelacja (niższe zarobki)
+            - -0.5 do -0.3: Umiarkowana negatywna korelacja
+            - <-0.5: Silna negatywna korelacja
+            
+            **Przykłady ujemnych korelacji:**
+            - Umiejętności junior-level często korelują negatywnie z zarobkami
+            - Podstawowe narzędzia mogą być wymagane w gorzej płatnych pozycjach
+            - Niektóre technologie mogą być używane głównie w mniejszych firmach
             """)
         if visualizer:
             fig_correlation_bar = visualizer.create_correlation_bar_chart(processor, salary_df)
