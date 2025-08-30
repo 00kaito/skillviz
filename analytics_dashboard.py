@@ -246,9 +246,9 @@ def show_salary_analysis(display_df, visualizer, processor):
     salary_df.loc[salary_df['salary_min'] < 300, 'salary_min'] = salary_df.loc[salary_df['salary_min'] < 300, 'salary_min'] * 168
     salary_df.loc[salary_df['salary_max'] < 300, 'salary_max'] = salary_df.loc[salary_df['salary_max'] < 300, 'salary_max'] * 168
     
-    # Remove extreme salary outliers (above 70,000 PLN)
+    # Remove extreme salary outliers (above 70,000 PLN and below 30 PLN/h equivalent = 5,040 PLN/month)
     original_count = len(salary_df)
-    salary_df = salary_df[salary_df['salary_avg'] <= 70000]
+    salary_df = salary_df[(salary_df['salary_avg'] >= 5040) & (salary_df['salary_avg'] <= 70000)]
     filtered_count = original_count - len(salary_df)
     
     if salary_df.empty:
@@ -275,7 +275,7 @@ def show_salary_analysis(display_df, visualizer, processor):
     with col4:
         if filtered_count > 0:
             st.metric("Ofert w analizie", f"{len(salary_df)} z {len(display_df)}")
-            st.caption(f"Odfiltrowano {filtered_count} ofert z wynagrodzeniami >70k PLN")
+            st.caption(f"Odfiltrowano {filtered_count} ofert z ekstremalnymi wynagrodzeniami")
         else:
             st.metric("Ofert z danymi o wynagrodzeniach", f"{len(salary_df)} z {len(display_df)}")
     
