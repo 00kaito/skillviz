@@ -261,9 +261,10 @@ def show_salary_analysis(display_df, visualizer, processor):
         st.metric("Mediana Wynagrodzeń", f"{median_salary:,.0f} PLN")
     
     with col3:
-        min_salary = salary_df['salary_min'].min()
-        max_salary = salary_df['salary_max'].max()
-        st.metric("Zakres", f"{min_salary:,.0f} - {max_salary:,.0f} PLN")
+        # Use actual min/max from the filtered average salaries for more accurate range
+        min_salary = salary_df['salary_avg'].min()
+        max_salary = salary_df['salary_avg'].max()
+        st.metric("Zakres Wynagrodzeń", f"{min_salary:,.0f} - {max_salary:,.0f} PLN")
     
     with col4:
         if filtered_count > 0:
