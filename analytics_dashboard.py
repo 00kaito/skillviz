@@ -240,6 +240,12 @@ def show_salary_analysis(display_df, visualizer, processor):
     # Filter out rows without salary data and extreme salaries (>70k PLN)
     salary_df = display_df.dropna(subset=['salary_avg'])
     
+    # Convert any remaining hourly rates to monthly (for existing data)
+    salary_df = salary_df.copy()
+    salary_df.loc[salary_df['salary_avg'] < 300, 'salary_avg'] = salary_df.loc[salary_df['salary_avg'] < 300, 'salary_avg'] * 168
+    salary_df.loc[salary_df['salary_min'] < 300, 'salary_min'] = salary_df.loc[salary_df['salary_min'] < 300, 'salary_min'] * 168
+    salary_df.loc[salary_df['salary_max'] < 300, 'salary_max'] = salary_df.loc[salary_df['salary_max'] < 300, 'salary_max'] * 168
+    
     # Remove extreme salary outliers (above 70,000 PLN)
     original_count = len(salary_df)
     salary_df = salary_df[salary_df['salary_avg'] <= 70000]
