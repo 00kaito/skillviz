@@ -290,13 +290,13 @@ def show_salary_analysis(display_df, visualizer, processor):
         st.write("**Współczynniki Korelacji dla Umiejętności**")
         if visualizer:
             fig_correlation_bar = visualizer.create_correlation_bar_chart(processor, salary_df)
-            st.plotly_chart(fig_correlation_bar, width='stretch')
+            st.plotly_chart(fig_correlation_bar, width='stretch', key='correlation_bar')
     
     with col2:
         st.write("**Macierz Korelacji (Heatmap)**")
         if visualizer:
             fig_correlation_heatmap = visualizer.create_correlation_heatmap(processor, salary_df)
-            st.plotly_chart(fig_correlation_heatmap, width='stretch')
+            st.plotly_chart(fig_correlation_heatmap, width='stretch', key='correlation_heatmap')
     
     st.divider()
     
@@ -309,13 +309,13 @@ def show_salary_analysis(display_df, visualizer, processor):
         st.write("**Regresja: Poziom Doświadczenia vs Wynagrodzenie**")
         if visualizer:
             fig_seniority_regression = visualizer.create_seniority_regression_chart(processor, salary_df)
-            st.plotly_chart(fig_seniority_regression, width='stretch')
+            st.plotly_chart(fig_seniority_regression, width='stretch', key='seniority_regression')
     
     with col2:
         st.write("**Regresja: Liczba Umiejętności vs Wynagrodzenie**")
         if visualizer:
             fig_skills_count_regression = visualizer.create_skills_count_regression_chart(processor, salary_df)
-            st.plotly_chart(fig_skills_count_regression, width='stretch')
+            st.plotly_chart(fig_skills_count_regression, width='stretch', key='skills_count_regression')
     
     st.divider()
     

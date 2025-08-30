@@ -901,7 +901,7 @@ class JobDataProcessor:
         # 2. Seniority level correlation (convert to numeric)
         seniority_mapping = {
             'Junior': 1, 'Mid': 2, 'Regular': 2, 'Senior': 3, 
-            'Expert': 4, 'Lead': 4, 'Principal': 5
+            'Expert': 4, 'Lead': 4
         }
         
         salary_df['seniority_numeric'] = salary_df['seniority'].map(seniority_mapping)
@@ -939,7 +939,7 @@ class JobDataProcessor:
         # 1. Seniority vs salary regression
         seniority_mapping = {
             'Junior': 1, 'Mid': 2, 'Regular': 2, 'Senior': 3, 
-            'Expert': 4, 'Lead': 4, 'Principal': 5
+            'Expert': 4, 'Lead': 4
         }
         
         salary_df['seniority_numeric'] = salary_df['seniority'].map(seniority_mapping)
@@ -958,8 +958,13 @@ class JobDataProcessor:
             sum_x2 = np.sum(x * x)
             
             # Slope (a) and intercept (b)
-            a = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x)
-            b = (sum_y - a * sum_x) / n
+            denominator = n * sum_x2 - sum_x * sum_x
+            if denominator != 0:
+                a = (n * sum_xy - sum_x * sum_y) / denominator
+                b = (sum_y - a * sum_x) / n
+            else:
+                a = 0
+                b = np.mean(y)
             
             # R-squared
             y_pred = a * x + b
@@ -1063,7 +1068,7 @@ class JobDataProcessor:
         # Prepare numerical data
         seniority_mapping = {
             'Junior': 1, 'Mid': 2, 'Regular': 2, 'Senior': 3, 
-            'Expert': 4, 'Lead': 4, 'Principal': 5
+            'Expert': 4, 'Lead': 4
         }
         
         salary_df['seniority_numeric'] = salary_df['seniority'].map(seniority_mapping)
