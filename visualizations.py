@@ -665,6 +665,249 @@ class JobMarketVisualizer:
         
         return fig
     
+    def create_correlation_heatmap(self, processor, df):
+        """Create correlation matrix heatmap."""
+        correlation_df = processor.get_correlation_matrix_data(df, top_skills=8)
+        
+        if correlation_df.empty:
+            fig = go.Figure()
+            fig.add_annotation(
+                text="Brak danych do analizy korelacji",
+                xref="paper", yref="paper",
+                x=0.5, y=0.5, xanchor='center', yanchor='middle',
+                showarrow=False, font=dict(size=16)
+            )
+            fig.update_layout(
+                title="Macierz Korelacji",
+                xaxis=dict(visible=False),
+                yaxis=dict(visible=False),
+                plot_bgcolor='white'
+            )
+            return fig
+        
+        # Create heatmap
+        fig = go.Figure(data=go.Heatmap(
+            z=correlation_df.values,
+            x=correlation_df.columns,
+            y=correlation_df.index,
+            colorscale='RdBu',
+            zmid=0,
+            zmin=-1,
+            zmax=1,
+            text=correlation_df.round(2).values,
+            texttemplate="%{text}",
+            textfont={"size": 10},
+            colorbar=dict(
+                title="Współczynnik Korelacji",
+                titleside="right"
+            )
+        ))
+        
+        fig.update_layout(
+            title="Macierz Korelacji: Wynagrodzenia vs Umiejętności",
+            xaxis_title="Czynniki",
+            yaxis_title="Czynniki",
+            font=dict(size=10),
+            height=600,
+            width=700
+        )
+        
+        return fig
+    
+    def create_seniority_regression_chart(self, processor, df):
+        """Create seniority vs salary regression chart."""
+        regression_results = processor.get_regression_analysis(df)
+        
+        if 'seniority' not in regression_results:
+            fig = go.Figure()
+            fig.add_annotation(
+                text="Brak wystarczających danych do regresji",
+                xref="paper", yref="paper",
+                x=0.5, y=0.5, xanchor='center', yanchor='middle',
+                showarrow=False, font=dict(size=16)
+            )
+            return fig
+        
+        # Filter data with salary information
+        salary_df = df.dropna(subset=['salary_avg']).copy()
+        
+        # Map seniority to numeric values
+        seniority_mapping = {
+            'Junior': 1, 'Mid': 2, 'Regular': 2, 'Senior': 3, 
+            'Expert': 4, 'Lead': 4, 'Principal': 5
+        }
+        
+        salary_df['seniority_numeric'] = salary_df['seniority'].map(seniority_mapping)
+        salary_df['seniority_numeric'] = salary_df['seniority_numeric'].fillna(2)
+        
+        # Create scatter plot
+        fig = go.Figure()
+        
+        # Add data points
+        fig.add_trace(go.Scatter(
+            x=salary_df['seniority_numeric'],
+            y=salary_df['salary_avg'],
+            mode='markers',
+            name='Dane',
+            marker=dict(
+                size=8,
+                color='lightblue',
+                opacity=0.7
+            ),
+            hovertemplate='Poziom: %{x}<br>Wynagrodzenie: %{y:,.0f} PLN<extra></extra>'
+        ))
+        
+        # Add regression line
+        reg_data = regression_results['seniority']
+        x_range = np.linspace(1, 5, 100)
+        y_pred = reg_data['slope'] * x_range + reg_data['intercept']
+        
+        fig.add_trace(go.Scatter(
+            x=x_range,
+            y=y_pred,
+            mode='lines',
+            name=f'Regresja (R² = {reg_data["r_squared"]:.3f})',
+            line=dict(color='red', width=2),
+            hovertemplate='Przewidywane: %{y:,.0f} PLN<extra></extra>'
+        ))
+        
+        fig.update_layout(
+            title=f'Regresja Liniowa: Poziom Doświadczenia vs Wynagrodzenie<br><sub>{reg_data["equation"]}</sub>',
+            xaxis_title="Poziom Doświadczenia (1=Junior, 2=Mid, 3=Senior, 4=Expert, 5=Principal)",
+            yaxis_title="Średnie Wynagrodzenie (PLN)",
+            showlegend=True,
+            hovermode='closest'
+        )
+        
+        # Set x-axis ticks
+        fig.update_xaxes(
+            tickvals=[1, 2, 3, 4, 5],
+            ticktext=['Junior', 'Mid', 'Senior', 'Expert', 'Principal']
+        )
+        
+        return fig
+    
+    def create_skills_count_regression_chart(self, processor, df):
+        """Create skills count vs salary regression chart."""
+        regression_results = processor.get_regression_analysis(df)
+        
+        if 'skills_count' not in regression_results:
+            fig = go.Figure()
+            fig.add_annotation(
+                text="Brak wystarczających danych do regresji",
+                xref="paper", yref="paper",
+                x=0.5, y=0.5, xanchor='center', yanchor='middle',
+                showarrow=False, font=dict(size=16)
+            )
+            return fig
+        
+        # Filter data with salary information
+        salary_df = df.dropna(subset=['salary_avg']).copy()
+        
+        # Create scatter plot
+        fig = go.Figure()
+        
+        # Add data points
+        fig.add_trace(go.Scatter(
+            x=salary_df['skillsCount'],
+            y=salary_df['salary_avg'],
+            mode='markers',
+            name='Dane',
+            marker=dict(
+                size=8,
+                color='lightgreen',
+                opacity=0.7
+            ),
+            hovertemplate='Liczba umiejętności: %{x}<br>Wynagrodzenie: %{y:,.0f} PLN<extra></extra>'
+        ))
+        
+        # Add regression line
+        reg_data = regression_results['skills_count']
+        x_min, x_max = salary_df['skillsCount'].min(), salary_df['skillsCount'].max()
+        x_range = np.linspace(x_min, x_max, 100)
+        y_pred = reg_data['slope'] * x_range + reg_data['intercept']
+        
+        fig.add_trace(go.Scatter(
+            x=x_range,
+            y=y_pred,
+            mode='lines',
+            name=f'Regresja (R² = {reg_data["r_squared"]:.3f})',
+            line=dict(color='red', width=2),
+            hovertemplate='Przewidywane: %{y:,.0f} PLN<extra></extra>'
+        ))
+        
+        fig.update_layout(
+            title=f'Regresja Liniowa: Liczba Umiejętności vs Wynagrodzenie<br><sub>{reg_data["equation"]}</sub>',
+            xaxis_title="Liczba Wymaganych Umiejętności",
+            yaxis_title="Średnie Wynagrodzenie (PLN)",
+            showlegend=True,
+            hovermode='closest'
+        )
+        
+        return fig
+    
+    def create_correlation_bar_chart(self, processor, df):
+        """Create correlation coefficients bar chart."""
+        correlations = processor.get_correlation_analysis(df)
+        
+        if not correlations:
+            fig = go.Figure()
+            fig.add_annotation(
+                text="Brak danych do analizy korelacji",
+                xref="paper", yref="paper",
+                x=0.5, y=0.5, xanchor='center', yanchor='middle',
+                showarrow=False, font=dict(size=16)
+            )
+            return fig
+        
+        # Filter skill correlations (exclude meta correlations)
+        skill_correlations = {k: v for k, v in correlations.items() 
+                            if k not in ['seniority_level', 'skills_count']}
+        
+        if not skill_correlations:
+            fig = go.Figure()
+            fig.add_annotation(
+                text="Brak korelacji umiejętności do wyświetlenia",
+                xref="paper", yref="paper",
+                x=0.5, y=0.5, xanchor='center', yanchor='middle',
+                showarrow=False, font=dict(size=16)
+            )
+            return fig
+        
+        # Sort by correlation strength
+        sorted_correlations = sorted(skill_correlations.items(), key=lambda x: abs(x[1]), reverse=True)
+        skills = [item[0] for item in sorted_correlations[:15]]  # Top 15
+        correlation_values = [item[1] for item in sorted_correlations[:15]]
+        
+        # Color based on positive/negative correlation
+        colors = ['green' if corr > 0 else 'red' for corr in correlation_values]
+        
+        fig = go.Figure(data=[
+            go.Bar(
+                x=skills,
+                y=correlation_values,
+                marker_color=colors,
+                text=[f'{corr:.3f}' for corr in correlation_values],
+                textposition='auto',
+                hovertemplate='%{x}<br>Korelacja: %{y:.3f}<extra></extra>'
+            )
+        ])
+        
+        fig.update_layout(
+            title="Korelacja Umiejętności z Wynagrodzeniami<br><sub>Dodatnia = wyższe wynagrodzenia, Ujemna = niższe wynagrodzenia</sub>",
+            xaxis_title="Umiejętności",
+            yaxis_title="Współczynnik Korelacji",
+            showlegend=False
+        )
+        
+        # Add horizontal line at 0
+        fig.add_hline(y=0, line_dash="dash", line_color="gray")
+        
+        # Rotate x-axis labels
+        fig.update_xaxes(tickangle=45)
+        
+        return fig
+    
     def _create_empty_chart(self, message):
         """Create an empty chart with a message."""
         fig = go.Figure()

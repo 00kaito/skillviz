@@ -265,17 +265,104 @@ def show_salary_analysis(display_df, visualizer, processor):
     
     st.divider()
     
-    # Main salary analysis charts
+    # Correlation analysis section
+    st.subheader("🔍 Analiza Korelacji z Wynagrodzeniami")
+    
     col1, col2 = st.columns(2)
     
     with col1:
-        st.subheader("💼 Najlepiej Płacące Umiejętności")
+        st.write("**Współczynniki Korelacji dla Umiejętności**")
+        if visualizer:
+            fig_correlation_bar = visualizer.create_correlation_bar_chart(processor, salary_df)
+            st.plotly_chart(fig_correlation_bar, width='stretch')
+    
+    with col2:
+        st.write("**Macierz Korelacji (Heatmap)**")
+        if visualizer:
+            fig_correlation_heatmap = visualizer.create_correlation_heatmap(processor, salary_df)
+            st.plotly_chart(fig_correlation_heatmap, width='stretch')
+    
+    st.divider()
+    
+    # Regression analysis section
+    st.subheader("📈 Analiza Regresji Liniowej")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.write("**Regresja: Poziom Doświadczenia vs Wynagrodzenie**")
+        if visualizer:
+            fig_seniority_regression = visualizer.create_seniority_regression_chart(processor, salary_df)
+            st.plotly_chart(fig_seniority_regression, width='stretch')
+    
+    with col2:
+        st.write("**Regresja: Liczba Umiejętności vs Wynagrodzenie**")
+        if visualizer:
+            fig_skills_count_regression = visualizer.create_skills_count_regression_chart(processor, salary_df)
+            st.plotly_chart(fig_skills_count_regression, width='stretch')
+    
+    st.divider()
+    
+    # Statistical summary
+    st.subheader("📊 Podsumowanie Analiz Statystycznych")
+    
+    # Get regression results
+    regression_results = processor.get_regression_analysis(salary_df)
+    correlations = processor.get_correlation_analysis(salary_df)
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.write("**Regresja Doświadczenia**")
+        if 'seniority' in regression_results:
+            seniority_r2 = regression_results['seniority']['r_squared']
+            st.metric("Współczynnik Determinacji R²", f"{seniority_r2:.3f}")
+            st.write(f"Równanie: {regression_results['seniority']['equation']}")
+        else:
+            st.write("Brak wystarczających danych")
+    
+    with col2:
+        st.write("**Regresja Liczby Umiejętności**")
+        if 'skills_count' in regression_results:
+            skills_r2 = regression_results['skills_count']['r_squared']
+            st.metric("Współczynnik Determinacji R²", f"{skills_r2:.3f}")
+            st.write(f"Równanie: {regression_results['skills_count']['equation']}")
+        else:
+            st.write("Brak wystarczających danych")
+    
+    with col3:
+        st.write("**Najsilniejsze Korelacje**")
+        if correlations:
+            # Get top 3 correlations by absolute value
+            skill_correlations = {k: v for k, v in correlations.items() 
+                                if k not in ['seniority_level', 'skills_count']}
+            
+            if skill_correlations:
+                top_correlations = sorted(skill_correlations.items(), 
+                                        key=lambda x: abs(x[1]), reverse=True)[:3]
+                
+                for skill, corr in top_correlations:
+                    st.write(f"**{skill}:** {corr:.3f}")
+            else:
+                st.write("Brak danych o korelacjach")
+        else:
+            st.write("Brak danych o korelacjach")
+    
+    st.divider()
+    
+    # Traditional charts section
+    st.subheader("💼 Tradycyjne Analizy Wynagrodzeń")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.write("**Najlepiej Płacące Umiejętności**")
         if visualizer:
             fig_skills_salary = visualizer.create_skills_salary_correlation_chart(processor, salary_df)
             st.plotly_chart(fig_skills_salary, width='stretch')
     
     with col2:
-        st.subheader("📊 Wynagrodzenia według Doświadczenia")
+        st.write("**Wynagrodzenia według Doświadczenia**")
         if visualizer:
             fig_seniority_salary = visualizer.create_seniority_salary_chart(processor, salary_df)
             st.plotly_chart(fig_seniority_salary, width='stretch')

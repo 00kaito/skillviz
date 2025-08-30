@@ -839,6 +839,261 @@ class JobDataProcessor:
         
         return result_df
     
+    def get_correlation_analysis(self, df=None):
+        """Analyze correlations between skills and salary."""
+        if df is None:
+            df = self.df
+        
+        if df.empty or 'salary_avg' not in df.columns:
+            return {}
+        
+        # Filter out rows without salary data
+        salary_df = df.dropna(subset=['salary_avg']).copy()
+        
+        if salary_df.empty:
+            return {}
+        
+        correlations = {}
+        
+        # 1. Skills frequency vs salary correlation
+        skill_salary_data = {}
+        for _, row in salary_df.iterrows():
+            skills_dict = row['skills']
+            salary = row['salary_avg']
+            
+            if isinstance(skills_dict, dict) and pd.notna(salary):
+                for skill in skills_dict.keys():
+                    if skill not in skill_salary_data:
+                        skill_salary_data[skill] = {'salaries': [], 'counts': []}
+        
+        # Count skill occurrences and collect salaries
+        for skill in skill_salary_data.keys():
+            skill_salaries = []
+            skill_counts = []
+            
+            for _, row in salary_df.iterrows():
+                skills_dict = row['skills']
+                salary = row['salary_avg']
+                
+                if isinstance(skills_dict, dict):
+                    has_skill = 1 if skill in skills_dict else 0
+                    skill_salaries.append(salary)
+                    skill_counts.append(has_skill)
+            
+            if len(skill_salaries) > 5:  # Need enough data points
+                correlation = np.corrcoef(skill_counts, skill_salaries)[0, 1]
+                if not np.isnan(correlation):
+                    correlations[skill] = correlation
+        
+        # 2. Seniority level correlation (convert to numeric)
+        seniority_mapping = {
+            'Junior': 1, 'Mid': 2, 'Regular': 2, 'Senior': 3, 
+            'Expert': 4, 'Lead': 4, 'Principal': 5
+        }
+        
+        salary_df['seniority_numeric'] = salary_df['seniority'].map(seniority_mapping)
+        salary_df['seniority_numeric'] = salary_df['seniority_numeric'].fillna(2)  # Default to Mid level
+        
+        if len(salary_df) > 3:
+            seniority_correlation = np.corrcoef(salary_df['seniority_numeric'], salary_df['salary_avg'])[0, 1]
+            if not np.isnan(seniority_correlation):
+                correlations['seniority_level'] = seniority_correlation
+        
+        # 3. Skills count correlation
+        if len(salary_df) > 3:
+            skills_count_correlation = np.corrcoef(salary_df['skillsCount'], salary_df['salary_avg'])[0, 1]
+            if not np.isnan(skills_count_correlation):
+                correlations['skills_count'] = skills_count_correlation
+        
+        return correlations
+    
+    def get_regression_analysis(self, df=None, target_skill=None):
+        """Perform linear regression analysis for salary prediction."""
+        if df is None:
+            df = self.df
+        
+        if df.empty or 'salary_avg' not in df.columns:
+            return {}
+        
+        # Filter out rows without salary data
+        salary_df = df.dropna(subset=['salary_avg']).copy()
+        
+        if salary_df.empty or len(salary_df) < 5:
+            return {}
+        
+        regression_results = {}
+        
+        # 1. Seniority vs salary regression
+        seniority_mapping = {
+            'Junior': 1, 'Mid': 2, 'Regular': 2, 'Senior': 3, 
+            'Expert': 4, 'Lead': 4, 'Principal': 5
+        }
+        
+        salary_df['seniority_numeric'] = salary_df['seniority'].map(seniority_mapping)
+        salary_df['seniority_numeric'] = salary_df['seniority_numeric'].fillna(2)
+        
+        if len(salary_df) >= 5:
+            # Linear regression: y = ax + b
+            x = salary_df['seniority_numeric'].values
+            y = salary_df['salary_avg'].values
+            
+            # Calculate regression coefficients
+            n = len(x)
+            sum_x = np.sum(x)
+            sum_y = np.sum(y)
+            sum_xy = np.sum(x * y)
+            sum_x2 = np.sum(x * x)
+            
+            # Slope (a) and intercept (b)
+            a = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x)
+            b = (sum_y - a * sum_x) / n
+            
+            # R-squared
+            y_pred = a * x + b
+            ss_res = np.sum((y - y_pred) ** 2)
+            ss_tot = np.sum((y - np.mean(y)) ** 2)
+            r_squared = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
+            
+            regression_results['seniority'] = {
+                'slope': a,
+                'intercept': b,
+                'r_squared': r_squared,
+                'equation': f'Salary = {a:.0f} * Seniority + {b:.0f}',
+                'data_points': len(salary_df)
+            }
+        
+        # 2. Skills count vs salary regression
+        if len(salary_df) >= 5:
+            x = salary_df['skillsCount'].values
+            y = salary_df['salary_avg'].values
+            
+            # Calculate regression coefficients
+            n = len(x)
+            sum_x = np.sum(x)
+            sum_y = np.sum(y)
+            sum_xy = np.sum(x * y)
+            sum_x2 = np.sum(x * x)
+            
+            if sum_x2 - (sum_x * sum_x / n) != 0:  # Avoid division by zero
+                a = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x)
+                b = (sum_y - a * sum_x) / n
+                
+                # R-squared
+                y_pred = a * x + b
+                ss_res = np.sum((y - y_pred) ** 2)
+                ss_tot = np.sum((y - np.mean(y)) ** 2)
+                r_squared = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
+                
+                regression_results['skills_count'] = {
+                    'slope': a,
+                    'intercept': b,
+                    'r_squared': r_squared,
+                    'equation': f'Salary = {a:.0f} * Skills Count + {b:.0f}',
+                    'data_points': len(salary_df)
+                }
+        
+        # 3. Specific skill regression (if target_skill provided)
+        if target_skill:
+            skill_indicator = []
+            salaries = []
+            
+            for _, row in salary_df.iterrows():
+                skills_dict = row['skills']
+                if isinstance(skills_dict, dict):
+                    has_skill = 1 if target_skill in skills_dict else 0
+                    skill_indicator.append(has_skill)
+                    salaries.append(row['salary_avg'])
+            
+            if len(skill_indicator) >= 10 and sum(skill_indicator) >= 3:  # Need enough positive cases
+                x = np.array(skill_indicator)
+                y = np.array(salaries)
+                
+                # Simple regression for binary variable
+                salary_with_skill = np.mean([s for i, s in enumerate(salaries) if skill_indicator[i] == 1])
+                salary_without_skill = np.mean([s for i, s in enumerate(salaries) if skill_indicator[i] == 0])
+                
+                regression_results[f'skill_{target_skill}'] = {
+                    'salary_with_skill': salary_with_skill,
+                    'salary_without_skill': salary_without_skill,
+                    'difference': salary_with_skill - salary_without_skill,
+                    'skill': target_skill,
+                    'data_points': len(salaries)
+                }
+        
+        return regression_results
+    
+    def get_correlation_matrix_data(self, df=None, top_skills=10):
+        """Get correlation matrix data for visualization."""
+        if df is None:
+            df = self.df
+        
+        if df.empty or 'salary_avg' not in df.columns:
+            return pd.DataFrame()
+        
+        # Filter out rows without salary data
+        salary_df = df.dropna(subset=['salary_avg']).copy()
+        
+        if salary_df.empty:
+            return pd.DataFrame()
+        
+        # Get top skills
+        all_skills = []
+        for skills_list in salary_df['requiredSkills']:
+            all_skills.extend(skills_list)
+        
+        from collections import Counter
+        top_skills_list = [skill for skill, _ in Counter(all_skills).most_common(top_skills)]
+        
+        # Create correlation matrix data
+        matrix_data = []
+        
+        # Prepare numerical data
+        seniority_mapping = {
+            'Junior': 1, 'Mid': 2, 'Regular': 2, 'Senior': 3, 
+            'Expert': 4, 'Lead': 4, 'Principal': 5
+        }
+        
+        salary_df['seniority_numeric'] = salary_df['seniority'].map(seniority_mapping)
+        salary_df['seniority_numeric'] = salary_df['seniority_numeric'].fillna(2)
+        
+        # Base factors
+        factors = ['Salary', 'Seniority', 'Skills Count']
+        correlation_matrix = np.zeros((len(factors) + len(top_skills_list), len(factors) + len(top_skills_list)))
+        factor_names = factors + top_skills_list
+        
+        # Create data arrays
+        data_arrays = {}
+        data_arrays['Salary'] = salary_df['salary_avg'].values
+        data_arrays['Seniority'] = salary_df['seniority_numeric'].values
+        data_arrays['Skills Count'] = salary_df['skillsCount'].values
+        
+        # Add skill indicators
+        for skill in top_skills_list:
+            skill_indicator = []
+            for _, row in salary_df.iterrows():
+                skills_dict = row['skills']
+                has_skill = 1 if isinstance(skills_dict, dict) and skill in skills_dict else 0
+                skill_indicator.append(has_skill)
+            data_arrays[skill] = np.array(skill_indicator)
+        
+        # Calculate correlation matrix
+        for i, factor1 in enumerate(factor_names):
+            for j, factor2 in enumerate(factor_names):
+                if i == j:
+                    correlation_matrix[i, j] = 1.0
+                else:
+                    corr = np.corrcoef(data_arrays[factor1], data_arrays[factor2])[0, 1]
+                    correlation_matrix[i, j] = corr if not np.isnan(corr) else 0.0
+        
+        # Convert to DataFrame for easier handling
+        correlation_df = pd.DataFrame(
+            correlation_matrix,
+            index=factor_names,
+            columns=factor_names
+        )
+        
+        return correlation_df
+    
     def get_data(self, is_guest=False):
         """Get appropriate data based on user type."""
         if is_guest:
