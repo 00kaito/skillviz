@@ -698,8 +698,7 @@ class JobMarketVisualizer:
             texttemplate="%{text}",
             textfont={"size": 10},
             colorbar=dict(
-                title="Współczynnik Korelacji",
-                titleside="right"
+                title="Współczynnik Korelacji"
             )
         ))
         
