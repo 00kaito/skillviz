@@ -237,8 +237,13 @@ def show_salary_analysis(display_df, visualizer, processor):
         st.warning("⚠️ Brak danych o wynagrodzeniach do analizy. Upewnij się, że przesłane dane zawierają pole 'salary' z informacjami o wynagrodzeniach.")
         return
     
-    # Filter out rows without salary data for counts
+    # Filter out rows without salary data and extreme salaries (>70k PLN)
     salary_df = display_df.dropna(subset=['salary_avg'])
+    
+    # Remove extreme salary outliers (above 70,000 PLN)
+    original_count = len(salary_df)
+    salary_df = salary_df[salary_df['salary_avg'] <= 70000]
+    filtered_count = original_count - len(salary_df)
     
     if salary_df.empty:
         st.warning("⚠️ Nie znaleziono poprawnych danych o wynagrodzeniach do analizy.")
@@ -261,7 +266,11 @@ def show_salary_analysis(display_df, visualizer, processor):
         st.metric("Zakres", f"{min_salary:,.0f} - {max_salary:,.0f} PLN")
     
     with col4:
-        st.metric("Ofert z danymi o wynagrodzeniach", f"{len(salary_df)} z {len(display_df)}")
+        if filtered_count > 0:
+            st.metric("Ofert w analizie", f"{len(salary_df)} z {len(display_df)}")
+            st.caption(f"Odfiltrowano {filtered_count} ofert z wynagrodzeniami >70k PLN")
+        else:
+            st.metric("Ofert z danymi o wynagrodzeniach", f"{len(salary_df)} z {len(display_df)}")
     
     st.divider()
     
