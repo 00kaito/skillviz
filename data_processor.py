@@ -1186,3 +1186,203 @@ class JobDataProcessor:
                 # Save updated data to persistent storage
                 self._save_persistent_data()
     
+    # ============ SKILL-SPECIFIC ANALYTICS ============
+    
+    def get_all_skills_list(self, df=None):
+        """Get all unique skills for search/selection."""
+        if df is None:
+            df = self.df
+        
+        if df.empty:
+            return []
+        
+        all_skills = set()
+        for _, row in df.iterrows():
+            skills_dict = row['skills']
+            if isinstance(skills_dict, dict):
+                all_skills.update(skills_dict.keys())
+        
+        return sorted(list(all_skills))
+    
+    def get_skill_detailed_analytics(self, skill_name, df=None):
+        """Get comprehensive analytics for a specific skill."""
+        if df is None:
+            df = self.df
+        
+        if df.empty or skill_name not in self.get_all_skills_list(df):
+            return {}
+        
+        analytics = {}
+        
+        # Filter offers that require this skill
+        skill_offers = []
+        skill_levels = []
+        skill_salaries = []
+        skill_seniorities = []
+        skill_companies = []
+        skill_cities = []
+        
+        for _, row in df.iterrows():
+            skills_dict = row['skills']
+            if isinstance(skills_dict, dict) and skill_name in skills_dict:
+                skill_offers.append(row)
+                skill_levels.append(skills_dict[skill_name])
+                
+                if pd.notna(row.get('salary_avg')):
+                    skill_salaries.append(row['salary_avg'])
+                
+                if pd.notna(row.get('seniority')):
+                    skill_seniorities.append(row['seniority'])
+                
+                if pd.notna(row.get('company')):
+                    skill_companies.append(row['company'])
+                
+                if pd.notna(row.get('city')):
+                    skill_cities.append(row['city'])
+        
+        # Basic statistics
+        analytics['total_offers'] = len(skill_offers)
+        analytics['market_share'] = (len(skill_offers) / len(df)) * 100 if len(df) > 0 else 0
+        
+        # Level distribution
+        level_counter = Counter(skill_levels)
+        analytics['level_distribution'] = dict(level_counter)
+        
+        # Seniority distribution
+        seniority_counter = Counter(skill_seniorities)
+        analytics['seniority_distribution'] = dict(seniority_counter)
+        
+        # Salary statistics
+        if skill_salaries:
+            analytics['salary_stats'] = {
+                'count': len(skill_salaries),
+                'mean': np.mean(skill_salaries),
+                'median': np.median(skill_salaries),
+                'min': min(skill_salaries),
+                'max': max(skill_salaries),
+                'std': np.std(skill_salaries)
+            }
+        else:
+            analytics['salary_stats'] = None
+        
+        # Top companies and cities
+        company_counter = Counter(skill_companies)
+        city_counter = Counter(skill_cities)
+        analytics['top_companies'] = dict(company_counter.most_common(10))
+        analytics['top_cities'] = dict(city_counter.most_common(10))
+        
+        return analytics
+    
+    def get_skill_vs_seniority_analysis(self, skill_name, df=None):
+        """Analyze how skill appears across different seniority levels."""
+        if df is None:
+            df = self.df
+        
+        if df.empty:
+            return pd.DataFrame()
+        
+        seniority_skill_data = []
+        
+        # Get all seniority levels
+        all_seniorities = df['seniority'].dropna().unique()
+        
+        for seniority in all_seniorities:
+            seniority_df = df[df['seniority'] == seniority]
+            
+            # Count offers with this skill at this seniority level
+            skill_count = 0
+            total_count = len(seniority_df)
+            level_counts = defaultdict(int)
+            
+            for _, row in seniority_df.iterrows():
+                skills_dict = row['skills']
+                if isinstance(skills_dict, dict) and skill_name in skills_dict:
+                    skill_count += 1
+                    level_counts[skills_dict[skill_name]] += 1
+            
+            percentage = (skill_count / total_count) * 100 if total_count > 0 else 0
+            
+            seniority_skill_data.append({
+                'seniority': seniority,
+                'skill_offers': skill_count,
+                'total_offers': total_count,
+                'percentage': percentage,
+                'most_common_level': max(level_counts, key=level_counts.get) if level_counts else 'N/A',
+                'level_distribution': dict(level_counts)
+            })
+        
+        return pd.DataFrame(seniority_skill_data)
+    
+    def get_skill_salary_by_level_analysis(self, skill_name, df=None):
+        """Analyze salary differences by skill level."""
+        if df is None:
+            df = self.df
+        
+        if df.empty or 'salary_avg' not in df.columns:
+            return pd.DataFrame()
+        
+        skill_salary_data = []
+        
+        for _, row in df.iterrows():
+            skills_dict = row['skills']
+            if isinstance(skills_dict, dict) and skill_name in skills_dict and pd.notna(row['salary_avg']):
+                skill_salary_data.append({
+                    'skill_level': skills_dict[skill_name],
+                    'salary': row['salary_avg'],
+                    'seniority': row.get('seniority', 'Unknown'),
+                    'company': row.get('company', 'Unknown'),
+                    'city': row.get('city', 'Unknown')
+                })
+        
+        salary_df = pd.DataFrame(skill_salary_data)
+        
+        if salary_df.empty:
+            return pd.DataFrame()
+        
+        # Group by skill level and calculate statistics
+        level_stats = salary_df.groupby('skill_level')['salary'].agg([
+            'count', 'mean', 'median', 'min', 'max', 'std'
+        ]).round(0)
+        
+        level_stats.columns = ['Liczba ofert', 'Średnia', 'Mediana', 'Min', 'Max', 'Odchylenie std']
+        level_stats = level_stats.reset_index()
+        level_stats.columns = ['Poziom umiejętności'] + list(level_stats.columns[1:])
+        
+        return level_stats
+    
+    def get_skill_market_trends(self, skill_name, df=None):
+        """Get market trends for a specific skill over time."""
+        if df is None:
+            df = self.df
+        
+        if df.empty or 'published_date' not in df.columns:
+            return pd.DataFrame()
+        
+        # Filter for skill and valid dates
+        skill_trends = []
+        
+        for _, row in df.iterrows():
+            skills_dict = row['skills']
+            if isinstance(skills_dict, dict) and skill_name in skills_dict and pd.notna(row['published_date']):
+                skill_trends.append({
+                    'date': row['published_date'],
+                    'skill_level': skills_dict[skill_name],
+                    'salary': row.get('salary_avg', None),
+                    'seniority': row.get('seniority', 'Unknown')
+                })
+        
+        trends_df = pd.DataFrame(skill_trends)
+        
+        if trends_df.empty:
+            return pd.DataFrame()
+        
+        # Group by date and calculate statistics
+        daily_stats = trends_df.groupby('date').agg({
+            'skill_level': 'count',
+            'salary': ['mean', 'count']
+        }).reset_index()
+        
+        daily_stats.columns = ['Data', 'Liczba ofert', 'Średnia pensja', 'Oferty z pensją']
+        
+        return daily_stats
+    

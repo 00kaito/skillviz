@@ -57,13 +57,14 @@ def display_analytics():
 
 def show_analytics_tabs(display_df, visualizer, processor):
     """Show the main analytics tabs."""
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
         "📊 Analiza Umiejętności", 
         "🎯 Poziomy Doświadczenia", 
         "🌍 Analiza Lokalizacji", 
         "🏢 Analiza Firm", 
         "📈 Trendy Rynkowe",
-        "💰 Analiza Dochodów"
+        "💰 Analiza Dochodów",
+        "🔍 Szczegółowa Analiza Umiejętności"
     ])
     
     with tab1:
@@ -83,6 +84,9 @@ def show_analytics_tabs(display_df, visualizer, processor):
     
     with tab6:
         show_salary_analysis(display_df, visualizer, processor)
+    
+    with tab7:
+        show_detailed_skill_analysis(display_df, visualizer, processor)
 
 def show_skills_analysis(display_df, visualizer, processor):
     """Show skills analysis tab content."""
@@ -708,3 +712,246 @@ def show_salary_analysis(display_df, visualizer, processor):
             st.info(f"Wyświetlono top 20 umiejętności z {len(detailed_salary_data)} dostępnych.")
     else:
         st.warning("Brak szczegółowych danych o wynagrodzeniach do wyświetlenia.")
+
+def show_detailed_skill_analysis(display_df, visualizer, processor):
+    """Show detailed analysis for a specific skill."""
+    st.header("🔍 Szczegółowa Analiza Umiejętności")
+    st.markdown("*Wybierz umiejętność aby zobaczyć szczegółowe statystyki rynkowe*")
+    
+    # Get all available skills
+    all_skills = processor.get_all_skills_list(display_df)
+    
+    if not all_skills:
+        st.warning("⚠️ Brak danych o umiejętnościach do analizy.")
+        return
+    
+    # Skill selection with search
+    col1, col2 = st.columns([3, 1])
+    
+    with col1:
+        selected_skill = st.selectbox(
+            "🔍 Wyszukaj i wybierz umiejętność:",
+            options=all_skills,
+            index=0,
+            help="Wybierz umiejętność z listy aby zobaczyć szczegółowe analizy"
+        )
+    
+    with col2:
+        st.metric("Dostępne umiejętności", len(all_skills))
+    
+    if not selected_skill:
+        st.info("👆 Wybierz umiejętność z listy powyżej aby rozpocząć analizę.")
+        return
+    
+    # Get analytics for selected skill
+    skill_analytics = processor.get_skill_detailed_analytics(selected_skill, display_df)
+    
+    if not skill_analytics:
+        st.error(f"❌ Nie udało się pobrać danych dla umiejętności: {selected_skill}")
+        return
+    
+    # Display skill overview
+    st.subheader(f"📊 Przegląd Umiejętności: {selected_skill}")
+    
+    # Basic metrics
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric("Oferty z tą umiejętnością", skill_analytics.get('total_offers', 0))
+    
+    with col2:
+        market_share = skill_analytics.get('market_share', 0)
+        st.metric("Udział w rynku", f"{market_share:.1f}%")
+    
+    with col3:
+        if skill_analytics.get('salary_stats'):
+            avg_salary = skill_analytics['salary_stats']['mean']
+            st.metric("Średnie wynagrodzenie", f"{avg_salary:,.0f} PLN")
+        else:
+            st.metric("Średnie wynagrodzenie", "Brak danych")
+    
+    with col4:
+        level_dist = skill_analytics.get('level_distribution', {})
+        most_common_level = max(level_dist, key=level_dist.get) if level_dist else "N/A"
+        st.metric("Najczęstszy poziom", most_common_level)
+    
+    st.divider()
+    
+    # Detailed analytics sections
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Level distribution chart
+        st.subheader("🎯 Rozkład Poziomów Umiejętności")
+        with st.expander("ℹ️ Jak interpretować rozkład poziomów?", expanded=False):
+            st.write("""
+            **Co pokazuje:**
+            - Jakie poziomy biegłości w tej umiejętności są najczęściej wymagane
+            - Rozkład wymagań: Junior, Regular, Senior, Expert
+            
+            **Jak czytać:**
+            - Większe segmenty = częściej wymagane poziomy
+            - Procenty pokazują udział każdego poziomu
+            
+            **Zastosowanie:**
+            - Ocena na jakim poziomie warto rozwijać umiejętność
+            - Identyfikacja najbardziej poszukiwanych poziomów biegłości
+            """)
+        
+        if visualizer:
+            fig_levels = visualizer.create_skill_level_distribution_chart(skill_analytics)
+            st.plotly_chart(fig_levels, width='stretch', key=f'skill_levels_{selected_skill}')
+    
+    with col2:
+        # Seniority analysis
+        st.subheader("👨‍💼 Analiza według Seniority")
+        with st.expander("ℹ️ Jak interpretować analizę seniority?", expanded=False):
+            st.write("""
+            **Co pokazuje:**
+            - Na których poziomach kariery ta umiejętność jest najczęściej wymagana
+            - Procent ofert dla każdego poziomu seniority
+            
+            **Jak czytać:**
+            - Wysokość słupków = procent ofert wymagających tej umiejętności
+            - Liczby na słupkach = konkretna liczba ofert
+            
+            **Zastosowanie:**
+            - Ocena czy umiejętność jest typowa dla juniorów czy seniorów
+            - Planowanie rozwoju kariery
+            """)
+        
+        seniority_df = processor.get_skill_vs_seniority_analysis(selected_skill, display_df)
+        if not seniority_df.empty and visualizer:
+            fig_seniority = visualizer.create_skill_seniority_analysis_chart(seniority_df)
+            st.plotly_chart(fig_seniority, width='stretch', key=f'skill_seniority_{selected_skill}')
+        else:
+            st.info("Brak wystarczających danych o poziomach seniority")
+    
+    st.divider()
+    
+    # Salary analysis
+    if skill_analytics.get('salary_stats'):
+        st.subheader("💰 Analiza Wynagrodzeń")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Salary statistics table
+            salary_stats = skill_analytics['salary_stats']
+            st.write("**Statystyki wynagrodzeń:**")
+            
+            stats_data = {
+                'Metryka': ['Liczba ofert', 'Średnia', 'Mediana', 'Minimum', 'Maksimum', 'Odchylenie standardowe'],
+                'Wartość': [
+                    f"{salary_stats['count']} ofert",
+                    f"{salary_stats['mean']:,.0f} PLN",
+                    f"{salary_stats['median']:,.0f} PLN", 
+                    f"{salary_stats['min']:,.0f} PLN",
+                    f"{salary_stats['max']:,.0f} PLN",
+                    f"{salary_stats['std']:,.0f} PLN"
+                ]
+            }
+            st.dataframe(pd.DataFrame(stats_data), width='stretch')
+        
+        with col2:
+            # Salary by skill level
+            st.write("**Wynagrodzenia według poziomu umiejętności:**")
+            with st.expander("ℹ️ Jak interpretować wynagrodzenia według poziomu?", expanded=False):
+                st.write("""
+                **Co pokazuje:**
+                - Jak zmienia się wynagrodzenie w zależności od poziomu biegłości
+                - Średnie pensje dla Junior, Regular, Senior, Expert
+                
+                **Jak czytać:**
+                - Wysokość słupków = średnie wynagrodzenie dla poziomu
+                - Liczby na słupkach = ile ofert uwzględniono w analizie
+                
+                **Zastosowanie:**
+                - Ocena opłacalności rozwoju umiejętności na wyższy poziom
+                - Negocjowanie wynagrodzenia na podstawie poziomu
+                """)
+            
+            salary_by_level = processor.get_skill_salary_by_level_analysis(selected_skill, display_df)
+            if not salary_by_level.empty and visualizer:
+                fig_salary_level = visualizer.create_skill_salary_by_level_chart(salary_by_level)
+                st.plotly_chart(fig_salary_level, width='stretch', key=f'skill_salary_{selected_skill}')
+            else:
+                st.info("Brak wystarczających danych o wynagrodzeniach według poziomów")
+    else:
+        st.subheader("💰 Analiza Wynagrodzeń")
+        st.info("⚠️ Brak danych o wynagrodzeniach dla tej umiejętności")
+    
+    st.divider()
+    
+    # Market trends
+    st.subheader("📈 Trendy Rynkowe")
+    with st.expander("ℹ️ Jak interpretować trendy rynkowe?", expanded=False):
+        st.write("""
+        **Co pokazuje:**
+        - Jak zmieniała się popularność umiejętności w czasie
+        - Trend wynagrodzeń dla tej umiejętności
+        
+        **Jak czytać:**
+        - Niebieska linia = liczba ofert w czasie
+        - Czerwona linia = średnie wynagrodzenie w czasie
+        - Rosnące linie = zwiększające się zapotrzebowanie/wynagrodzenia
+        
+        **Zastosowanie:**
+        - Ocena czy umiejętność zyskuje czy traci na popularności
+        - Prognozowanie przyszłej wartości umiejętności
+        """)
+    
+    trends_df = processor.get_skill_market_trends(selected_skill, display_df)
+    if not trends_df.empty and visualizer:
+        fig_trends = visualizer.create_skill_trends_chart(trends_df)
+        st.plotly_chart(fig_trends, width='stretch', key=f'skill_trends_{selected_skill}')
+    else:
+        st.info("Brak danych o trendach czasowych (wymagane pole 'published_date')")
+    
+    st.divider()
+    
+    # Additional insights
+    st.subheader("🏢 Dodatkowe Informacje")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Top companies
+        st.write("**Top firmy wymagające tej umiejętności:**")
+        top_companies = skill_analytics.get('top_companies', {})
+        if top_companies:
+            for i, (company, count) in enumerate(list(top_companies.items())[:5], 1):
+                st.write(f"{i}. **{company}** - {count} ofert")
+        else:
+            st.info("Brak danych o firmach")
+    
+    with col2:
+        # Top cities
+        st.write("**Top miasta z ofertami tej umiejętności:**")
+        top_cities = skill_analytics.get('top_cities', {})
+        if top_cities:
+            for i, (city, count) in enumerate(list(top_cities.items())[:5], 1):
+                st.write(f"{i}. **{city}** - {count} ofert")
+        else:
+            st.info("Brak danych o miastach")
+    
+    # Comprehensive overview chart
+    st.subheader("🎯 Kompleksowy Przegląd")
+    with st.expander("ℹ️ Jak interpretować kompleksowy przegląd?", expanded=False):
+        st.write("""
+        **Co pokazuje:**
+        - Cztery kluczowe aspekty umiejętności w jednym miejscu:
+          1. Rozkład poziomów biegłości
+          2. Rozkład według seniority
+          3. Top firmy rekrutujące
+          4. Top miasta z ofertami
+        
+        **Zastosowanie:**
+        - Szybki przegląd wszystkich aspektów umiejętności
+        - Porównanie różnych charakterystyk w jednym miejscu
+        - Identyfikacja najlepszych kierunków rozwoju
+        """)
+    
+    if visualizer:
+        fig_overview = visualizer.create_skill_market_overview_chart(skill_analytics, selected_skill)
+        st.plotly_chart(fig_overview, width='stretch', key=f'skill_overview_{selected_skill}')

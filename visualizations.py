@@ -907,6 +907,176 @@ class JobMarketVisualizer:
         
         return fig
     
+    # ============ SKILL-SPECIFIC VISUALIZATIONS ============
+    
+    def create_skill_level_distribution_chart(self, skill_analytics):
+        """Create a pie chart showing skill level distribution for a specific skill."""
+        if not skill_analytics or 'level_distribution' not in skill_analytics:
+            return self._create_empty_chart("Brak danych o poziomach umiejętności")
+        
+        level_dist = skill_analytics['level_distribution']
+        if not level_dist:
+            return self._create_empty_chart("Brak danych o poziomach umiejętności")
+        
+        levels = list(level_dist.keys())
+        counts = list(level_dist.values())
+        
+        fig = px.pie(
+            values=counts,
+            names=levels,
+            title='Rozkład Poziomów Umiejętności'
+        )
+        
+        fig.update_traces(textposition='inside', textinfo='percent+label')
+        fig.update_layout(height=400)
+        
+        return fig
+    
+    def create_skill_seniority_analysis_chart(self, seniority_df):
+        """Create a bar chart showing skill frequency across seniority levels."""
+        if seniority_df.empty:
+            return self._create_empty_chart("Brak danych o poziomach seniority")
+        
+        fig = px.bar(
+            seniority_df,
+            x='seniority',
+            y='percentage',
+            title='Częstotliwość Umiejętności według Poziomu Seniority',
+            labels={'seniority': 'Poziom Seniority', 'percentage': 'Procent ofert (%)'},
+            color='percentage',
+            color_continuous_scale='viridis',
+            text='skill_offers'
+        )
+        
+        fig.update_traces(texttemplate='%{text} ofert', textposition='outside')
+        fig.update_layout(height=400, showlegend=False)
+        
+        return fig
+    
+    def create_skill_salary_by_level_chart(self, salary_level_df):
+        """Create a bar chart showing salary differences by skill level."""
+        if salary_level_df.empty:
+            return self._create_empty_chart("Brak danych o wynagrodzeniach według poziomów")
+        
+        fig = px.bar(
+            salary_level_df,
+            x='Poziom umiejętności',
+            y='Średnia',
+            title='Średnie Wynagrodzenie według Poziomu Umiejętności',
+            labels={'Średnia': 'Średnie wynagrodzenie (PLN)'},
+            color='Średnia',
+            color_continuous_scale='viridis',
+            text='Liczba ofert'
+        )
+        
+        fig.update_traces(texttemplate='%{text} ofert', textposition='outside')
+        fig.update_layout(height=400, showlegend=False)
+        
+        return fig
+    
+    def create_skill_trends_chart(self, trends_df):
+        """Create a line chart showing skill trends over time."""
+        if trends_df.empty:
+            return self._create_empty_chart("Brak danych o trendach")
+        
+        fig = go.Figure()
+        
+        # Add offers count line
+        fig.add_trace(go.Scatter(
+            x=trends_df['Data'],
+            y=trends_df['Liczba ofert'],
+            mode='lines+markers',
+            name='Liczba ofert',
+            line=dict(color='blue', width=2),
+            yaxis='y'
+        ))
+        
+        # Add average salary line (if available)
+        if 'Średnia pensja' in trends_df.columns and not trends_df['Średnia pensja'].isna().all():
+            fig.add_trace(go.Scatter(
+                x=trends_df['Data'],
+                y=trends_df['Średnia pensja'],
+                mode='lines+markers',
+                name='Średnia pensja',
+                line=dict(color='red', width=2),
+                yaxis='y2'
+            ))
+        
+        fig.update_layout(
+            title='Trendy Umiejętności w Czasie',
+            xaxis_title='Data',
+            yaxis=dict(title='Liczba ofert', side='left'),
+            yaxis2=dict(title='Średnia pensja (PLN)', side='right', overlaying='y'),
+            height=400,
+            hovermode='x unified'
+        )
+        
+        return fig
+    
+    def create_skill_market_overview_chart(self, skill_analytics, skill_name):
+        """Create a comprehensive overview chart for a skill."""
+        if not skill_analytics:
+            return self._create_empty_chart(f"Brak danych dla umiejętności: {skill_name}")
+        
+        # Create subplots
+        fig = make_subplots(
+            rows=2, cols=2,
+            subplot_titles=(
+                'Rozkład Poziomów',
+                'Rozkład Seniority', 
+                'Top Firmy',
+                'Top Miasta'
+            ),
+            specs=[
+                [{"type": "pie"}, {"type": "bar"}],
+                [{"type": "bar"}, {"type": "bar"}]
+            ]
+        )
+        
+        # Level distribution pie chart
+        if 'level_distribution' in skill_analytics and skill_analytics['level_distribution']:
+            levels = list(skill_analytics['level_distribution'].keys())
+            level_counts = list(skill_analytics['level_distribution'].values())
+            fig.add_trace(
+                go.Pie(labels=levels, values=level_counts, name="Poziomy"),
+                row=1, col=1
+            )
+        
+        # Seniority distribution bar chart
+        if 'seniority_distribution' in skill_analytics and skill_analytics['seniority_distribution']:
+            seniorities = list(skill_analytics['seniority_distribution'].keys())
+            seniority_counts = list(skill_analytics['seniority_distribution'].values())
+            fig.add_trace(
+                go.Bar(x=seniorities, y=seniority_counts, name="Seniority", showlegend=False),
+                row=1, col=2
+            )
+        
+        # Top companies bar chart
+        if 'top_companies' in skill_analytics and skill_analytics['top_companies']:
+            companies = list(skill_analytics['top_companies'].keys())[:5]  # Top 5
+            company_counts = list(skill_analytics['top_companies'].values())[:5]
+            fig.add_trace(
+                go.Bar(x=companies, y=company_counts, name="Firmy", showlegend=False),
+                row=2, col=1
+            )
+        
+        # Top cities bar chart
+        if 'top_cities' in skill_analytics and skill_analytics['top_cities']:
+            cities = list(skill_analytics['top_cities'].keys())[:5]  # Top 5
+            city_counts = list(skill_analytics['top_cities'].values())[:5]
+            fig.add_trace(
+                go.Bar(x=cities, y=city_counts, name="Miasta", showlegend=False),
+                row=2, col=2
+            )
+        
+        fig.update_layout(
+            height=600,
+            title_text=f"Przegląd Rynkowy: {skill_name}",
+            showlegend=False
+        )
+        
+        return fig
+    
     def _create_empty_chart(self, message):
         """Create an empty chart with a message."""
         fig = go.Figure()
