@@ -4,6 +4,7 @@ import json
 from collections import Counter, defaultdict
 from datetime import datetime
 import re
+import streamlit as st
 from persistent_storage import PersistentStorage
 
 class JobDataProcessor:
@@ -501,17 +502,26 @@ class JobDataProcessor:
         
         return combo_df.sort_values('Frequency', ascending=False)
     
-    def get_skills_by_location(self, df=None):
+    @st.cache_data(ttl=300, hash_funcs={pd.DataFrame: lambda x: str(x.shape)})  # Custom hash for DataFrame with dicts
+    def get_skills_by_location(_self, df=None):
         """Get top skills by city."""
         if df is None:
-            df = self.df
+            df = _self.df
         
         city_skills = defaultdict(lambda: defaultdict(int))
         
-        for _, row in df.iterrows():
-            city = row['city']
-            for skill in row['requiredSkills']:
-                city_skills[city][skill] += 1
+        # Optimized: avoid iterrows, use explode instead
+        if 'requiredSkills' in df.columns and not df.empty:
+            # Create expanded DataFrame with one row per city-skill combination
+            expanded_df = df[['city', 'requiredSkills']].explode('requiredSkills')
+            expanded_df = expanded_df.dropna(subset=['requiredSkills'])
+            
+            # Group by city and skill, count occurrences
+            city_skill_counts = expanded_df.groupby(['city', 'requiredSkills']).size().reset_index(name='count')
+            
+            # Build defaultdict structure for compatibility
+            for _, row in city_skill_counts.iterrows():
+                city_skills[row['city']][row['requiredSkills']] = row['count']
         
         # Convert to DataFrame
         result_data = []
@@ -527,17 +537,26 @@ class JobDataProcessor:
         
         return pd.DataFrame(result_data)
     
-    def get_experience_skills_matrix(self, df=None):
+    @st.cache_data(ttl=300, hash_funcs={pd.DataFrame: lambda x: str(x.shape)})  # Custom hash for DataFrame with dicts
+    def get_experience_skills_matrix(_self, df=None):
         """Get skills distribution by seniority level."""
         if df is None:
-            df = self.df
+            df = _self.df
         
         exp_skills = defaultdict(lambda: defaultdict(int))
         
-        for _, row in df.iterrows():
-            seniority_level = row['seniority']
-            for skill in row['requiredSkills']:
-                exp_skills[seniority_level][skill] += 1
+        # Optimized: avoid iterrows, use explode instead
+        if 'requiredSkills' in df.columns and 'seniority' in df.columns and not df.empty:
+            # Create expanded DataFrame with one row per seniority-skill combination
+            expanded_df = df[['seniority', 'requiredSkills']].explode('requiredSkills')
+            expanded_df = expanded_df.dropna(subset=['requiredSkills', 'seniority'])
+            
+            # Group by seniority and skill, count occurrences
+            seniority_skill_counts = expanded_df.groupby(['seniority', 'requiredSkills']).size().reset_index(name='count')
+            
+            # Build defaultdict structure for compatibility
+            for _, row in seniority_skill_counts.iterrows():
+                exp_skills[row['seniority']][row['requiredSkills']] = row['count']
         
         # Convert to DataFrame for easier handling
         result_data = []
@@ -582,10 +601,11 @@ class JobDataProcessor:
         
         return summary
     
-    def get_skill_weight_analysis(self, df=None):
+    @st.cache_data(ttl=300, hash_funcs={pd.DataFrame: lambda x: str(x.shape)})  # Custom hash for DataFrame with dicts
+    def get_skill_weight_analysis(_self, df=None):
         """Analyze skill importance weighted by required proficiency level."""
         if df is None:
-            df = self.df
+            df = _self.df
         
         if df.empty:
             return pd.DataFrame()
@@ -605,14 +625,35 @@ class JobDataProcessor:
         
         skill_weight_data = defaultdict(lambda: {'total_weight': 0, 'count': 0, 'levels': defaultdict(int)})
         
-        for _, row in df.iterrows():
-            skills_dict = row['skills']
-            if isinstance(skills_dict, dict):
-                for skill, level in skills_dict.items():
-                    weight = level_weights.get(level, 2)  # Default weight for unknown levels
-                    skill_weight_data[skill]['total_weight'] += weight
-                    skill_weight_data[skill]['count'] += 1
-                    skill_weight_data[skill]['levels'][level] += 1
+        # Optimized: process all skills at once avoiding iterrows
+        if 'skills' in df.columns and not df.empty:
+            # Extract all skill-level pairs from the DataFrame
+            all_skill_data = []
+            for skills_dict in df['skills'].dropna():
+                if isinstance(skills_dict, dict):
+                    for skill, level in skills_dict.items():
+                        all_skill_data.append({'skill': skill, 'level': level})
+            
+            if all_skill_data:
+                # Convert to DataFrame for vectorized operations
+                skills_df = pd.DataFrame(all_skill_data)
+                skills_df['weight'] = skills_df['level'].map(level_weights).fillna(2)
+                
+                # Group by skill and aggregate
+                skill_groups = skills_df.groupby('skill').agg({
+                    'weight': ['sum', 'count'],
+                    'level': lambda x: dict(pd.Series(x).value_counts())
+                }).reset_index()
+                
+                # Flatten columns
+                skill_groups.columns = ['skill', 'total_weight', 'count', 'levels']
+                
+                # Build the original structure for compatibility
+                for _, row in skill_groups.iterrows():
+                    skill = row['skill']
+                    skill_weight_data[skill]['total_weight'] = row['total_weight']
+                    skill_weight_data[skill]['count'] = row['count']
+                    skill_weight_data[skill]['levels'] = defaultdict(int, row['levels'])
         
         # Convert to DataFrame
         result_data = []

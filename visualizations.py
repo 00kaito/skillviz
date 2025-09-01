@@ -4,6 +4,7 @@ from plotly.subplots import make_subplots
 import pandas as pd
 from collections import Counter
 import numpy as np
+import streamlit as st
 
 class JobMarketVisualizer:
     """Class for creating visualizations of job market data."""
@@ -11,21 +12,24 @@ class JobMarketVisualizer:
     def __init__(self, df):
         self.df = df
         
-    def create_skills_demand_chart(self, df=None, top_n=20):
+    @st.cache_data(ttl=300, hash_funcs={pd.DataFrame: lambda x: str(x.shape)})  # Custom hash for DataFrame with dicts
+    def create_skills_demand_chart(_self, df=None, top_n=20):
         """Create a bar chart showing skills demand."""
         if df is None:
-            df = self.df
+            df = _self.df
             
-        # Get skills statistics
-        all_skills = []
-        for skills_list in df['requiredSkills']:
-            all_skills.extend(skills_list)
+        # Optimized: use pandas explode instead of loops
+        if 'requiredSkills' in df.columns and not df.empty:
+            # Use explode to flatten the skills lists efficiently
+            skills_series = df['requiredSkills'].explode().dropna()
+            skills_counter = Counter(skills_series)
+        else:
+            skills_counter = Counter()
         
-        skills_counter = Counter(all_skills)
         top_skills = skills_counter.most_common(top_n)
         
         if not top_skills:
-            return self._create_empty_chart("Brak danych o umiejętnościach")
+            return _self._create_empty_chart("Brak danych o umiejętnościach")
         
         skills, counts = zip(*top_skills)
         
@@ -68,17 +72,18 @@ class JobMarketVisualizer:
         
         return fig
     
-    def create_experience_skills_heatmap(self, df=None, top_skills=15):
+    @st.cache_data(ttl=300, hash_funcs={pd.DataFrame: lambda x: str(x.shape)})  # Custom hash for DataFrame with dicts  
+    def create_experience_skills_heatmap(_self, df=None, top_skills=15):
         """Create a heatmap showing skills by experience level."""
         if df is None:
-            df = self.df
+            df = _self.df
         
-        # Get top skills first
-        all_skills = []
-        for skills_list in df['requiredSkills']:
-            all_skills.extend(skills_list)
-        
-        top_skills_list = [skill for skill, _ in Counter(all_skills).most_common(top_skills)]
+        # Optimized: get top skills using explode
+        if 'requiredSkills' in df.columns and not df.empty:
+            skills_series = df['requiredSkills'].explode().dropna()
+            top_skills_list = [skill for skill, _ in Counter(skills_series).most_common(top_skills)]
+        else:
+            top_skills_list = []
         
         # Create matrix
         exp_levels = df['seniority'].unique()
@@ -96,7 +101,7 @@ class JobMarketVisualizer:
             matrix_data.append(row_data)
         
         if not matrix_data:
-            return self._create_empty_chart("Brak danych dla mapy ciepła")
+            return _self._create_empty_chart("Brak danych dla mapy ciepła")
         
         fig = px.imshow(
             matrix_data,
@@ -216,13 +221,13 @@ class JobMarketVisualizer:
             df_with_dates = df_with_dates.dropna(subset=['published_date'])
                 
             if df_with_dates.empty:
-                return self._create_empty_chart("Nie znaleziono poprawnych dat publikacji po konwersji")
+                return _self._create_empty_chart("Nie znaleziono poprawnych dat publikacji po konwersji")
             
             # Group by date
             df_with_dates['date'] = df_with_dates['published_date'].dt.date
             daily_counts = df_with_dates.groupby('date').size().reset_index(name='count')
         except Exception as e:
-            return self._create_empty_chart(f"Błąd przetwarzania dat: {str(e)}")
+            return _self._create_empty_chart(f"Błąd przetwarzania dat: {str(e)}")
         
         fig = px.line(
             daily_counts,
@@ -283,29 +288,30 @@ class JobMarketVisualizer:
         
         return fig
     
-    def create_skills_trends_chart(self, df=None, top_skills=5):
+    @st.cache_data(ttl=300, hash_funcs={pd.DataFrame: lambda x: str(x.shape)})  # Custom hash for DataFrame with dicts
+    def create_skills_trends_chart(_self, df=None, top_skills=5):
         """Create a line chart showing skills demand trends over time."""
         if df is None:
-            df = self.df
+            df = _self.df
             
         if 'published_date' not in df.columns or df['published_date'].isna().all():
-            return self._create_empty_chart("Brak danych o datach publikacji dla trendów umiejętności")
+            return _self._create_empty_chart("Brak danych o datach publikacji dla trendów umiejętności")
         
         # Filter out null dates
         df_with_dates = df.dropna(subset=['published_date'])
         
         if df_with_dates.empty:
-            return self._create_empty_chart("Nie znaleziono poprawnych dat publikacji dla trendów umiejętności")
+            return _self._create_empty_chart("Nie znaleziono poprawnych dat publikacji dla trendów umiejętności")
         
-        # Get top skills first
-        all_skills = []
-        for skills_list in df_with_dates['requiredSkills']:
-            all_skills.extend(skills_list)
-        
-        top_skills_list = [skill for skill, _ in Counter(all_skills).most_common(top_skills)]
+        # Optimized: get top skills using explode
+        if 'requiredSkills' in df_with_dates.columns and not df_with_dates.empty:
+            skills_series = df_with_dates['requiredSkills'].explode().dropna()
+            top_skills_list = [skill for skill, _ in Counter(skills_series).most_common(top_skills)]
+        else:
+            top_skills_list = []
         
         if not top_skills_list:
-            return self._create_empty_chart("Brak danych o umiejętnościach dla trendów")
+            return _self._create_empty_chart("Brak danych o umiejętnościach dla trendów")
         
         try:
             # Always convert to datetime to be safe
@@ -314,12 +320,12 @@ class JobMarketVisualizer:
             df_with_dates = df_with_dates.dropna(subset=['published_date'])
                 
             if df_with_dates.empty:
-                return self._create_empty_chart("Nie znaleziono poprawnych dat publikacji po konwersji")
+                return _self._create_empty_chart("Nie znaleziono poprawnych dat publikacji po konwersji")
                 
             # Group by date and skill
             df_with_dates['date'] = df_with_dates['published_date'].dt.date
         except Exception as e:
-            return self._create_empty_chart(f"Błąd przetwarzania dat: {str(e)}")
+            return _self._create_empty_chart(f"Błąd przetwarzania dat: {str(e)}")
         
         # Create data for line chart
         trend_data = []
@@ -335,7 +341,7 @@ class JobMarketVisualizer:
                 })
         
         if not trend_data:
-            return self._create_empty_chart("Brak danych trendowych")
+            return _self._create_empty_chart("Brak danych trendowych")
         
         trend_df = pd.DataFrame(trend_data)
         
@@ -431,10 +437,11 @@ class JobMarketVisualizer:
         
         return fig
     
-    def create_skill_importance_matrix(self, df=None, top_n=15, excluded_skills=None):
+    @st.cache_data(ttl=300, hash_funcs={pd.DataFrame: lambda x: str(x.shape)})  # Custom hash for DataFrame with dicts
+    def create_skill_importance_matrix(_self, df=None, top_n=15, excluded_skills=None):
         """Create a heatmap showing skill importance vs frequency."""
         if df is None:
-            df = self.df
+            df = _self.df
         
         if excluded_skills is None:
             excluded_skills = []
