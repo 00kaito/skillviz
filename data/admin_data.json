@@ -11505,5 +11505,34 @@
       "Rpa"
     ],
     "upload_timestamp": "2025-08-30 15:14:39.807033"
+  },
+  {
+    "role": "AI2 Consultant Internship - AI Console",
+    "category": "ai",
+    "company": "10Clouds",
+    "city": "Warszawa",
+    "employment_type": null,
+    "job_time_type": null,
+    "remote": false,
+    "seniority": "Junior",
+    "salary": null,
+    "published_date": "2025-08-27 00:00:00",
+    "skills": {
+      "Ai": "Regular",
+      "Business Analysis": "Regular",
+      "Python": "Regular"
+    },
+    "url": "https://justjoin.it/job-offer/10clouds-ai-consultant-internship---ai-console-warszawa-ai-3522f861",
+    "salary_min": NaN,
+    "salary_max": NaN,
+    "salary_avg": NaN,
+    "salary_currency": null,
+    "skillsCount": 3,
+    "requiredSkills": [
+      "Ai",
+      "Business Analysis",
+      "Python"
+    ],
+    "upload_timestamp": "2025-09-05 14:20:47.021240"
   }
 ]

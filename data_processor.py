@@ -895,6 +895,7 @@ class JobDataProcessor:
         if df_with_data.empty:
             return {}
         
+        df_with_data = df_with_data.copy()
         df_with_data['month'] = pd.to_datetime(df_with_data['published_date']).dt.to_period('M')
         monthly_salary = df_with_data.groupby('month')['salary_avg'].agg(['mean', 'median', 'count']).reset_index()
         
@@ -912,6 +913,7 @@ class JobDataProcessor:
         if df_with_dates.empty:
             return {}
         
+        df_with_dates = df_with_dates.copy()
         df_with_dates['month'] = pd.to_datetime(df_with_dates['published_date']).dt.to_period('M')
         monthly_counts = df_with_dates.groupby('month').size().reset_index(name='job_count')
         
@@ -1685,72 +1687,74 @@ class JobDataProcessor:
         
         return sorted(list(all_skills))
     
-    def get_skill_detailed_analytics(self, skill_name, df=None):
-        """Get comprehensive analytics for a specific skill."""
+    def get_skill_detailed_analytics(self, skill_name, df=None, use_precomputed=True):
+        """Get comprehensive analytics for a specific skill (optimized version)."""
         if df is None:
             df = self.df
         
+        # Try to use pre-computed data first (MUCH FASTER!)
+        if use_precomputed:
+            is_guest = hasattr(self, '_current_user_is_guest') and self._current_user_is_guest
+            precomputed_detailed = self.get_precomputed_detailed_skills_data(is_guest=is_guest)
+            
+            if skill_name in precomputed_detailed:
+                return precomputed_detailed[skill_name]
+        
+        # Fallback to original computation if pre-computed data not available
         if df.empty or skill_name not in self.get_all_skills_list(df):
             return {}
         
         analytics = {}
         
-        # Filter offers that require this skill
-        skill_offers = []
-        skill_levels = []
-        skill_salaries = []
-        skill_seniorities = []
-        skill_companies = []
-        skill_cities = []
+        # OPTIMIZED: Use vectorized operations instead of iterrows()
+        # Filter dataframe to only rows that contain the skill
+        skill_mask = df['skills'].apply(lambda x: isinstance(x, dict) and skill_name in x)
+        skill_df = df[skill_mask].copy()
         
-        for _, row in df.iterrows():
-            skills_dict = row['skills']
-            if isinstance(skills_dict, dict) and skill_name in skills_dict:
-                skill_offers.append(row)
-                skill_levels.append(skills_dict[skill_name])
-                
-                if pd.notna(row.get('salary_avg')):
-                    skill_salaries.append(row['salary_avg'])
-                
-                if pd.notna(row.get('seniority')):
-                    skill_seniorities.append(row['seniority'])
-                
-                if pd.notna(row.get('company')):
-                    skill_companies.append(row['company'])
-                
-                if pd.notna(row.get('city')):
-                    skill_cities.append(row['city'])
+        if skill_df.empty:
+            return {}
         
         # Basic statistics
-        analytics['total_offers'] = len(skill_offers)
-        analytics['market_share'] = (len(skill_offers) / len(df)) * 100 if len(df) > 0 else 0
+        analytics['total_offers'] = len(skill_df)
+        analytics['market_share'] = (len(skill_df) / len(df)) * 100 if len(df) > 0 else 0
         
-        # Level distribution
-        level_counter = Counter(skill_levels)
-        analytics['level_distribution'] = dict(level_counter)
+        # Level distribution - VECTORIZED
+        skill_levels = skill_df['skills'].apply(lambda x: x.get(skill_name) if isinstance(x, dict) else None).dropna()
+        analytics['level_distribution'] = dict(skill_levels.value_counts())
         
-        # Seniority distribution
-        seniority_counter = Counter(skill_seniorities)
-        analytics['seniority_distribution'] = dict(seniority_counter)
+        # Seniority distribution - VECTORIZED
+        if 'seniority' in skill_df.columns:
+            analytics['seniority_distribution'] = dict(skill_df['seniority'].value_counts())
+        else:
+            analytics['seniority_distribution'] = {}
         
-        # Salary statistics
-        if skill_salaries:
-            analytics['salary_stats'] = {
-                'count': len(skill_salaries),
-                'mean': np.mean(skill_salaries),
-                'median': np.median(skill_salaries),
-                'min': min(skill_salaries),
-                'max': max(skill_salaries),
-                'std': np.std(skill_salaries)
-            }
+        # Salary statistics - VECTORIZED
+        if 'salary_avg' in skill_df.columns:
+            skill_salaries = skill_df['salary_avg'].dropna()
+            if not skill_salaries.empty:
+                analytics['salary_stats'] = {
+                    'count': len(skill_salaries),
+                    'mean': float(skill_salaries.mean()),
+                    'median': float(skill_salaries.median()),
+                    'min': float(skill_salaries.min()),
+                    'max': float(skill_salaries.max()),
+                    'std': float(skill_salaries.std())
+                }
+            else:
+                analytics['salary_stats'] = None
         else:
             analytics['salary_stats'] = None
         
-        # Top companies and cities
-        company_counter = Counter(skill_companies)
-        city_counter = Counter(skill_cities)
-        analytics['top_companies'] = dict(company_counter.most_common(10))
-        analytics['top_cities'] = dict(city_counter.most_common(10))
+        # Top companies and cities - VECTORIZED
+        if 'company' in skill_df.columns:
+            analytics['top_companies'] = dict(skill_df['company'].value_counts().head(10))
+        else:
+            analytics['top_companies'] = {}
+            
+        if 'city' in skill_df.columns:
+            analytics['top_cities'] = dict(skill_df['city'].value_counts().head(10))
+        else:
+            analytics['top_cities'] = {}
         
         return analytics
     

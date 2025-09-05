@@ -782,8 +782,21 @@ def show_detailed_skill_analysis(display_df, visualizer, processor):
     st.header("🔍 Szczegółowa Analiza Umiejętności")
     st.markdown("*Wybierz umiejętność aby zobaczyć szczegółowe statystyki rynkowe*")
     
-    # Get all available skills
-    all_skills = processor.get_all_skills_list(display_df)
+    # Get all available skills - USE PRE-COMPUTED DATA
+    @st.cache_data(ttl=300)  # 5 min cache
+    def get_cached_all_skills(data_hash, is_guest=False):
+        """Get cached list of all skills."""
+        # Try pre-computed data first for speed
+        precomputed_detailed = processor.get_precomputed_detailed_skills_data(is_guest=is_guest)
+        if precomputed_detailed:
+            return sorted(list(precomputed_detailed.keys()))
+        else:
+            # Fallback to original method
+            return processor.get_all_skills_list(display_df)
+    
+    is_guest = st.session_state.get('user_role') == 'guest'
+    data_hash = hash(str(len(display_df)) + str(display_df.columns.tolist()) + str(is_guest))
+    all_skills = get_cached_all_skills(data_hash, is_guest)
     
     if not all_skills:
         st.warning("⚠️ Brak danych o umiejętnościach do analizy.")
@@ -807,8 +820,17 @@ def show_detailed_skill_analysis(display_df, visualizer, processor):
         st.info("👆 Wybierz umiejętność z listy powyżej aby rozpocząć analizę.")
         return
     
-    # Get analytics for selected skill
-    skill_analytics = processor.get_skill_detailed_analytics(selected_skill, display_df)
+    # Get analytics for selected skill - USE CACHING
+    @st.cache_data(ttl=300, show_spinner="Analizuję umiejętność...")  # 5 min cache
+    def get_cached_skill_analytics(skill_name, data_hash, is_guest=False):
+        """Cached version of skill detailed analytics."""
+        return processor.get_skill_detailed_analytics(skill_name, display_df, use_precomputed=True)
+    
+    # Create a hash of the data to invalidate cache when data changes
+    is_guest = st.session_state.get('user_role') == 'guest'
+    data_hash = hash(str(len(display_df)) + str(display_df.columns.tolist()) + str(is_guest))
+    
+    skill_analytics = get_cached_skill_analytics(selected_skill, data_hash, is_guest)
     
     if not skill_analytics:
         st.error(f"❌ Nie udało się pobrać danych dla umiejętności: {selected_skill}")
@@ -884,7 +906,12 @@ def show_detailed_skill_analysis(display_df, visualizer, processor):
             - Planowanie rozwoju kariery
             """)
         
-        seniority_df = processor.get_skill_vs_seniority_analysis(selected_skill, display_df)
+        # Cache seniority analysis
+        @st.cache_data(ttl=300)
+        def get_cached_seniority_analysis(skill_name, data_hash):
+            return processor.get_skill_vs_seniority_analysis(skill_name, display_df)
+        
+        seniority_df = get_cached_seniority_analysis(selected_skill, data_hash)
         if not seniority_df.empty and visualizer:
             fig_seniority = visualizer.create_skill_seniority_analysis_chart(seniority_df)
             st.plotly_chart(fig_seniority, width='stretch', key=f'skill_seniority_{selected_skill}')
@@ -935,7 +962,12 @@ def show_detailed_skill_analysis(display_df, visualizer, processor):
                 - Negocjowanie wynagrodzenia na podstawie poziomu
                 """)
             
-            salary_by_level = processor.get_skill_salary_by_level_analysis(selected_skill, display_df)
+            # Cache salary by level analysis
+            @st.cache_data(ttl=300)
+            def get_cached_salary_by_level(skill_name, data_hash):
+                return processor.get_skill_salary_by_level_analysis(skill_name, display_df)
+            
+            salary_by_level = get_cached_salary_by_level(selected_skill, data_hash)
             if not salary_by_level.empty and visualizer:
                 fig_salary_level = visualizer.create_skill_salary_by_level_chart(salary_by_level)
                 st.plotly_chart(fig_salary_level, width='stretch', key=f'skill_salary_{selected_skill}')
@@ -965,7 +997,12 @@ def show_detailed_skill_analysis(display_df, visualizer, processor):
         - Prognozowanie przyszłej wartości umiejętności
         """)
     
-    trends_df = processor.get_skill_market_trends(selected_skill, display_df)
+    # Cache market trends analysis
+    @st.cache_data(ttl=300)
+    def get_cached_market_trends(skill_name, data_hash):
+        return processor.get_skill_market_trends(skill_name, display_df)
+    
+    trends_df = get_cached_market_trends(selected_skill, data_hash)
     if not trends_df.empty and visualizer:
         fig_trends = visualizer.create_skill_trends_chart(trends_df)
         st.plotly_chart(fig_trends, width='stretch', key=f'skill_trends_{selected_skill}')
