@@ -842,6 +842,10 @@ def show_detailed_skill_analysis(display_df, visualizer, processor):
     st.header("🔍 Szczegółowa Analiza Umiejętności")
     st.markdown("*Wybierz umiejętność aby zobaczyć szczegółowe statystyki rynkowe*")
     
+    # Performance info
+    if st.session_state.get('show_performance_info', False):
+        st.info("⚡ **Usprawnienia wydajności aktywne** - dane są ładowane z pre-computed cache dla maksymalnej szybkości")
+    
     # Get all available skills - USE PRE-COMPUTED DATA
     @st.cache_data(ttl=300)  # 5 min cache
     def get_cached_all_skills(data_hash, is_guest=False):
@@ -880,10 +884,10 @@ def show_detailed_skill_analysis(display_df, visualizer, processor):
         st.info("👆 Wybierz umiejętność z listy powyżej aby rozpocząć analizę.")
         return
     
-    # Get analytics for selected skill - USE CACHING
-    @st.cache_data(ttl=300, show_spinner="Analizuję umiejętność...")  # 5 min cache
+    # Get analytics for selected skill - USE CACHING WITH LONGER TTL
+    @st.cache_data(ttl=600, show_spinner="⚡ Ładuję dane z cache...")  # 10 min cache - longer for better performance
     def get_cached_skill_analytics(skill_name, data_hash, is_guest=False):
-        """Cached version of skill detailed analytics."""
+        """Cached version of skill detailed analytics (OPTIMIZED)."""
         return processor.get_skill_detailed_analytics(skill_name, display_df, use_precomputed=True)
     
     # Create a hash of the data to invalidate cache when data changes
@@ -966,8 +970,8 @@ def show_detailed_skill_analysis(display_df, visualizer, processor):
             - Planowanie rozwoju kariery
             """)
         
-        # Cache seniority analysis
-        @st.cache_data(ttl=300)
+        # Cache seniority analysis - LONGER TTL FOR BETTER PERFORMANCE
+        @st.cache_data(ttl=600)  # 10 min cache
         def get_cached_seniority_analysis(skill_name, data_hash):
             return processor.get_skill_vs_seniority_analysis(skill_name, display_df)
         
@@ -1057,8 +1061,8 @@ def show_detailed_skill_analysis(display_df, visualizer, processor):
         - Prognozowanie przyszłej wartości umiejętności
         """)
     
-    # Cache market trends analysis
-    @st.cache_data(ttl=300)
+    # Cache market trends analysis - LONGER TTL FOR BETTER PERFORMANCE
+    @st.cache_data(ttl=600)  # 10 min cache
     def get_cached_market_trends(skill_name, data_hash):
         return processor.get_skill_market_trends(skill_name, display_df)
     
