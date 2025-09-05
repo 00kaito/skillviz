@@ -16,6 +16,10 @@ class JobDataProcessor:
         self.categories_data = {}  # Store real data by categories
         self.demo_categories_data = {}  # Store demo data by categories
         
+        # Pre-computed aggregated data for faster access
+        self.precomputed_data = {}
+        self.demo_precomputed_data = {}
+        
         # Initialize persistent storage
         self.storage = PersistentStorage()
         
@@ -260,6 +264,9 @@ class JobDataProcessor:
                 existing_category_df = self.categories_data[category_key]
                 new_df = self._remove_duplicates(category_df, existing_category_df)
                 self.categories_data[category_key] = pd.concat([existing_category_df, new_df], ignore_index=True)
+        
+        # Pre-compute aggregated data for performance
+        self._precompute_aggregated_data()
         
         # Save to persistent storage
         self._save_persistent_data()
@@ -675,6 +682,439 @@ class JobDataProcessor:
             result_df = result_df.sort_values('importance_score', ascending=False)
         
         return result_df
+    
+    def _precompute_aggregated_data(self):
+        """Pre-compute aggregated data for all screens to improve performance."""
+        print("🔄 Pre-computing aggregated data for better performance...")
+        
+        # Get all data for aggregation (both demo and real)
+        data_sets = {
+            'real': self.df,
+            'demo': self.demo_df
+        }
+        
+        for data_type, df in data_sets.items():
+            if df is None or df.empty:
+                continue
+                
+            # Choose the right storage based on data type
+            if data_type == 'demo':
+                storage = self.demo_precomputed_data
+            else:
+                storage = self.precomputed_data
+            
+            try:
+                # 1. SKILLS SCREEN - Pre-aggregate skills data
+                storage['skills'] = {
+                    'top_skills': self._precompute_skills_demand(df),
+                    'skills_combinations': self._precompute_skill_combinations(df),
+                    'skills_weight_analysis': self._precompute_skills_weight(df),
+                    'experience_skills_matrix': self._precompute_experience_skills_matrix(df)
+                }
+                
+                # 2. LOCATION SCREEN - Pre-aggregate location data  
+                storage['location'] = {
+                    'skills_by_location': self._precompute_skills_by_location(df),
+                    'location_statistics': self._precompute_location_stats(df)
+                }
+                
+                # 3. TRENDS SCREEN - Pre-aggregate time series data
+                storage['trends'] = {
+                    'skills_trends': self._precompute_skills_trends(df),
+                    'salary_trends': self._precompute_salary_trends(df),
+                    'monthly_stats': self._precompute_monthly_stats(df)
+                }
+                
+                # 4. SALARY SCREEN - Pre-aggregate salary data
+                storage['salary'] = {
+                    'salary_correlation': self._precompute_salary_correlation(df),
+                    'salary_by_skills': self._precompute_salary_by_skills(df),
+                    'salary_statistics': self._precompute_salary_statistics(df)
+                }
+                
+                # 5. COMPANIES SCREEN - Pre-aggregate company data
+                storage['companies'] = {
+                    'top_companies': self._precompute_company_stats(df),
+                    'company_requirements': self._precompute_company_requirements(df)
+                }
+                
+                # 6. DETAILED SKILLS SCREEN - Pre-aggregate individual skill analytics
+                storage['detailed_skills'] = self._precompute_detailed_skills_analytics(df)
+                
+                print(f"✅ Pre-computed data for {data_type} dataset: {len(df)} records")
+                
+            except Exception as e:
+                print(f"❌ Error pre-computing {data_type} data: {e}")
+        
+        print("🎯 Pre-computation complete! Application performance significantly improved.")
+    
+    def _precompute_skills_demand(self, df):
+        """Pre-compute skills demand data."""
+        if 'requiredSkills' not in df.columns:
+            return {}
+        
+        # Get top 50 skills with counts
+        skills_series = df['requiredSkills'].explode().dropna()
+        skills_counts = skills_series.value_counts()
+        
+        return {
+            'top_20': skills_counts.head(20).to_dict(),
+            'top_50': skills_counts.head(50).to_dict(),
+            'all_skills': skills_counts.to_dict(),
+            'total_unique_skills': len(skills_counts)
+        }
+    
+    def _precompute_skill_combinations(self, df):
+        """Pre-compute skill combinations."""
+        if 'requiredSkills' not in df.columns:
+            return {}
+        
+        combinations = {}
+        for skills_list in df['requiredSkills']:
+            if len(skills_list) >= 2:
+                sorted_skills = sorted(skills_list)
+                for i in range(len(sorted_skills)):
+                    for j in range(i+1, len(sorted_skills)):
+                        combo = f"{sorted_skills[i]} + {sorted_skills[j]}"
+                        combinations[combo] = combinations.get(combo, 0) + 1
+        
+        # Sort by frequency and get top combinations
+        sorted_combos = sorted(combinations.items(), key=lambda x: x[1], reverse=True)
+        
+        return {
+            'top_20': dict(sorted_combos[:20]),
+            'top_50': dict(sorted_combos[:50]),
+            'all_combinations': combinations
+        }
+    
+    def _precompute_skills_weight(self, df):
+        """Pre-compute skills weight analysis."""
+        if 'skills' not in df.columns:
+            return {}
+        
+        level_weights = {
+            'Beginner': 1, 'Regular': 2, 'Advanced': 3, 'Senior': 4, 'Expert': 5,
+            'B1': 1, 'B2': 2, 'C1': 3, 'C2': 4
+        }
+        
+        skill_weights = {}
+        for skills_dict in df['skills'].dropna():
+            if isinstance(skills_dict, dict):
+                for skill, level in skills_dict.items():
+                    weight = level_weights.get(level, 2)
+                    if skill not in skill_weights:
+                        skill_weights[skill] = {'total_weight': 0, 'count': 0, 'levels': {}}
+                    skill_weights[skill]['total_weight'] += weight
+                    skill_weights[skill]['count'] += 1
+                    skill_weights[skill]['levels'][level] = skill_weights[skill]['levels'].get(level, 0) + 1
+        
+        # Calculate average weights and importance scores
+        for skill, data in skill_weights.items():
+            data['avg_weight'] = data['total_weight'] / data['count'] if data['count'] > 0 else 0
+            data['importance_score'] = data['total_weight']
+        
+        return skill_weights
+    
+    def _precompute_experience_skills_matrix(self, df):
+        """Pre-compute experience-skills matrix."""
+        if 'requiredSkills' not in df.columns or 'seniority' not in df.columns:
+            return {}
+        
+        matrix_data = {}
+        for seniority in df['seniority'].unique():
+            seniority_df = df[df['seniority'] == seniority]
+            skills_series = seniority_df['requiredSkills'].explode().dropna()
+            skills_counts = skills_series.value_counts()
+            matrix_data[seniority] = skills_counts.to_dict()
+        
+        return matrix_data
+    
+    def _precompute_skills_by_location(self, df):
+        """Pre-compute skills by location."""
+        if 'requiredSkills' not in df.columns or 'city' not in df.columns:
+            return {}
+        
+        location_skills = {}
+        for city in df['city'].unique():
+            city_df = df[df['city'] == city]
+            skills_series = city_df['requiredSkills'].explode().dropna()
+            skills_counts = skills_series.value_counts()
+            location_skills[city] = {
+                'top_5': skills_counts.head(5).to_dict(),
+                'all_skills': skills_counts.to_dict(),
+                'total_jobs': len(city_df)
+            }
+        
+        return location_skills
+    
+    def _precompute_location_stats(self, df):
+        """Pre-compute location statistics."""
+        if 'city' not in df.columns:
+            return {}
+        
+        city_stats = df['city'].value_counts().to_dict()
+        
+        return {
+            'top_cities': city_stats,
+            'total_cities': len(city_stats),
+            'remote_percentage': (df['remote'] == True).sum() / len(df) * 100 if 'remote' in df.columns else 0
+        }
+    
+    def _precompute_skills_trends(self, df):
+        """Pre-compute skills trends over time."""
+        if 'published_date' not in df.columns or 'requiredSkills' not in df.columns:
+            return {}
+        
+        # Filter valid dates
+        df_with_dates = df.dropna(subset=['published_date'])
+        if df_with_dates.empty:
+            return {}
+        
+        # Get monthly aggregations
+        df_with_dates['month'] = pd.to_datetime(df_with_dates['published_date']).dt.to_period('M')
+        
+        trends = {}
+        top_skills = df_with_dates['requiredSkills'].explode().dropna().value_counts().head(10).index
+        
+        for skill in top_skills:
+            skill_trends = []
+            for month in df_with_dates['month'].unique():
+                month_df = df_with_dates[df_with_dates['month'] == month]
+                count = sum(1 for skills_list in month_df['requiredSkills'] if skill in skills_list)
+                skill_trends.append({'month': str(month), 'count': count})
+            trends[skill] = skill_trends
+        
+        return trends
+    
+    def _precompute_salary_trends(self, df):
+        """Pre-compute salary trends over time."""
+        if 'published_date' not in df.columns or 'salary_avg' not in df.columns:
+            return {}
+        
+        df_with_data = df.dropna(subset=['published_date', 'salary_avg'])
+        if df_with_data.empty:
+            return {}
+        
+        df_with_data['month'] = pd.to_datetime(df_with_data['published_date']).dt.to_period('M')
+        monthly_salary = df_with_data.groupby('month')['salary_avg'].agg(['mean', 'median', 'count']).reset_index()
+        
+        return {
+            'monthly_averages': monthly_salary.to_dict('records'),
+            'overall_trend': 'increasing' if monthly_salary['mean'].is_monotonic_increasing else 'mixed'
+        }
+    
+    def _precompute_monthly_stats(self, df):
+        """Pre-compute monthly job statistics."""
+        if 'published_date' not in df.columns:
+            return {}
+        
+        df_with_dates = df.dropna(subset=['published_date'])
+        if df_with_dates.empty:
+            return {}
+        
+        df_with_dates['month'] = pd.to_datetime(df_with_dates['published_date']).dt.to_period('M')
+        monthly_counts = df_with_dates.groupby('month').size().reset_index(name='job_count')
+        
+        return {
+            'monthly_job_counts': monthly_counts.to_dict('records'),
+            'peak_month': monthly_counts.loc[monthly_counts['job_count'].idxmax(), 'month'] if not monthly_counts.empty else None
+        }
+    
+    def _precompute_salary_correlation(self, df):
+        """Pre-compute salary correlation data."""
+        if 'salary_avg' not in df.columns or 'requiredSkills' not in df.columns:
+            return {}
+        
+        salary_df = df.dropna(subset=['salary_avg'])
+        if salary_df.empty:
+            return {}
+        
+        # Calculate correlations for top skills
+        correlations = {}
+        top_skills = salary_df['requiredSkills'].explode().dropna().value_counts().head(20).index
+        
+        for skill in top_skills:
+            skill_salaries = []
+            skill_presence = []
+            
+            for _, row in salary_df.iterrows():
+                has_skill = 1 if skill in row['requiredSkills'] else 0
+                skill_salaries.append(row['salary_avg'])
+                skill_presence.append(has_skill)
+            
+            if sum(skill_presence) >= 3:  # At least 3 occurrences
+                correlation = np.corrcoef(skill_presence, skill_salaries)[0, 1]
+                if not np.isnan(correlation):
+                    correlations[skill] = correlation
+        
+        return correlations
+    
+    def _precompute_salary_by_skills(self, df):
+        """Pre-compute salary statistics by skills."""
+        if 'salary_avg' not in df.columns or 'requiredSkills' not in df.columns:
+            return {}
+        
+        salary_df = df.dropna(subset=['salary_avg'])
+        if salary_df.empty:
+            return {}
+        
+        skills_salary = {}
+        top_skills = salary_df['requiredSkills'].explode().dropna().value_counts().head(30).index
+        
+        for skill in top_skills:
+            skill_salaries = []
+            for _, row in salary_df.iterrows():
+                if skill in row['requiredSkills']:
+                    skill_salaries.append(row['salary_avg'])
+            
+            if len(skill_salaries) >= 3:
+                skills_salary[skill] = {
+                    'mean': np.mean(skill_salaries),
+                    'median': np.median(skill_salaries),
+                    'min': np.min(skill_salaries),
+                    'max': np.max(skill_salaries),
+                    'count': len(skill_salaries),
+                    'std': np.std(skill_salaries)
+                }
+        
+        return skills_salary
+    
+    def _precompute_salary_statistics(self, df):
+        """Pre-compute general salary statistics."""
+        if 'salary_avg' not in df.columns:
+            return {}
+        
+        salary_df = df.dropna(subset=['salary_avg'])
+        if salary_df.empty:
+            return {}
+        
+        return {
+            'overall_mean': salary_df['salary_avg'].mean(),
+            'overall_median': salary_df['salary_avg'].median(),
+            'overall_std': salary_df['salary_avg'].std(),
+            'overall_min': salary_df['salary_avg'].min(),
+            'overall_max': salary_df['salary_avg'].max(),
+            'count': len(salary_df),
+            'quartiles': salary_df['salary_avg'].quantile([0.25, 0.5, 0.75]).to_dict()
+        }
+    
+    def _precompute_company_stats(self, df):
+        """Pre-compute company statistics."""
+        if 'company' not in df.columns:
+            return {}
+        
+        company_counts = df['company'].value_counts()
+        
+        return {
+            'top_companies': company_counts.head(20).to_dict(),
+            'total_companies': len(company_counts),
+            'single_job_companies': sum(1 for count in company_counts.values if count == 1)
+        }
+    
+    def _precompute_company_requirements(self, df):
+        """Pre-compute company skill requirements."""
+        if 'company' not in df.columns or 'requiredSkills' not in df.columns:
+            return {}
+        
+        company_skills = {}
+        top_companies = df['company'].value_counts().head(10).index
+        
+        for company in top_companies:
+            company_df = df[df['company'] == company]
+            skills_series = company_df['requiredSkills'].explode().dropna()
+            skills_counts = skills_series.value_counts()
+            company_skills[company] = {
+                'top_skills': skills_counts.head(10).to_dict(),
+                'total_jobs': len(company_df),
+                'unique_skills': len(skills_counts)
+            }
+        
+        return company_skills
+    
+    def _precompute_detailed_skills_analytics(self, df):
+        """Pre-compute detailed analytics for individual skills."""
+        if 'requiredSkills' not in df.columns:
+            return {}
+        
+        detailed_analytics = {}
+        all_skills = df['requiredSkills'].explode().dropna().value_counts()
+        
+        # Pre-compute for top 100 skills
+        for skill in all_skills.head(100).index:
+            skill_df = df[df['requiredSkills'].apply(lambda x: skill in x)]
+            
+            analytics = {
+                'total_offers': len(skill_df),
+                'market_share': (len(skill_df) / len(df)) * 100
+            }
+            
+            # Level distribution
+            if 'skills' in df.columns:
+                levels = {}
+                for skills_dict in skill_df['skills'].dropna():
+                    if isinstance(skills_dict, dict) and skill in skills_dict:
+                        level = skills_dict[skill]
+                        levels[level] = levels.get(level, 0) + 1
+                analytics['level_distribution'] = levels
+            
+            # Seniority distribution
+            if 'seniority' in df.columns:
+                analytics['seniority_distribution'] = skill_df['seniority'].value_counts().to_dict()
+            
+            # Company and city distribution
+            if 'company' in df.columns:
+                analytics['top_companies'] = skill_df['company'].value_counts().head(5).to_dict()
+            
+            if 'city' in df.columns:
+                analytics['top_cities'] = skill_df['city'].value_counts().head(5).to_dict()
+            
+            # Salary statistics for this skill
+            if 'salary_avg' in df.columns:
+                skill_salaries = skill_df.dropna(subset=['salary_avg'])['salary_avg']
+                if not skill_salaries.empty:
+                    analytics['salary_stats'] = {
+                        'mean': skill_salaries.mean(),
+                        'median': skill_salaries.median(),
+                        'min': skill_salaries.min(),
+                        'max': skill_salaries.max(),
+                        'std': skill_salaries.std(),
+                        'count': len(skill_salaries)
+                    }
+            
+            detailed_analytics[skill] = analytics
+        
+        return detailed_analytics
+    
+    # Fast getter methods for pre-computed data
+    def get_precomputed_skills_data(self, is_guest=False):
+        """Get pre-computed skills data."""
+        storage = self.demo_precomputed_data if is_guest else self.precomputed_data
+        return storage.get('skills', {})
+    
+    def get_precomputed_location_data(self, is_guest=False):
+        """Get pre-computed location data."""
+        storage = self.demo_precomputed_data if is_guest else self.precomputed_data
+        return storage.get('location', {})
+    
+    def get_precomputed_trends_data(self, is_guest=False):
+        """Get pre-computed trends data."""
+        storage = self.demo_precomputed_data if is_guest else self.precomputed_data
+        return storage.get('trends', {})
+    
+    def get_precomputed_salary_data(self, is_guest=False):
+        """Get pre-computed salary data."""
+        storage = self.demo_precomputed_data if is_guest else self.precomputed_data
+        return storage.get('salary', {})
+    
+    def get_precomputed_companies_data(self, is_guest=False):
+        """Get pre-computed companies data."""
+        storage = self.demo_precomputed_data if is_guest else self.precomputed_data
+        return storage.get('companies', {})
+    
+    def get_precomputed_detailed_skills_data(self, is_guest=False):
+        """Get pre-computed detailed skills data."""
+        storage = self.demo_precomputed_data if is_guest else self.precomputed_data
+        return storage.get('detailed_skills', {})
     
     def get_skills_by_level(self, df=None):
         """Get skills statistics grouped by proficiency level."""

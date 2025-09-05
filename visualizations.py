@@ -1101,3 +1101,31 @@ class JobMarketVisualizer:
             yaxis=dict(showgrid=False, showticklabels=False)
         )
         return fig
+    
+    def create_skills_weight_chart_from_df(self, weight_df, top_n=20):
+        """Create a bar chart from pre-computed weight analysis DataFrame."""
+        if weight_df.empty:
+            return self._create_empty_chart("Brak danych o wagach umiejętności")
+        
+        # Get top skills by importance score
+        top_skills = weight_df.head(top_n)
+        
+        fig = px.bar(
+            top_skills,
+            x='importance_score',
+            y='skill',
+            orientation='h',
+            title=f'Top {top_n} Umiejętności według Wagi Ważności (Pre-agregowane)',
+            labels={'importance_score': 'Ocena Ważności', 'skill': 'Umiejętności'},
+            color='avg_weight',
+            color_continuous_scale='viridis',
+            hover_data=['frequency', 'avg_weight']
+        )
+        
+        fig.update_layout(
+            height=600,
+            yaxis={'categoryorder': 'total ascending'},
+            showlegend=False
+        )
+        
+        return fig

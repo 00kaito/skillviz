@@ -116,18 +116,49 @@ def show_skills_analysis(display_df, visualizer, processor):
             st.plotly_chart(fig_skills, width='stretch')
     
     with col2:
-        # Skills statistics
-        skills_stats = processor.get_skills_statistics(display_df)
+        # Skills statistics - USE PRE-COMPUTED DATA
         st.subheader("Statystyki Umiejętności")
-        for skill, count in skills_stats.head(10).items():
-            percentage = (count / len(display_df)) * 100 if len(display_df) > 0 else 0
-            st.metric(skill, f"{count} ofert", f"{percentage:.1f}%")
+        try:
+            # Get pre-computed skills data
+            is_guest = st.session_state.get('user_role') == 'guest'
+            precomputed_skills = processor.get_precomputed_skills_data(is_guest=is_guest)
+            top_skills = precomputed_skills.get('top_skills', {}).get('top_20', {})
+            
+            if top_skills:
+                total_jobs = len(display_df) if len(display_df) > 0 else 1
+                for skill, count in list(top_skills.items())[:10]:
+                    percentage = (count / total_jobs) * 100
+                    st.metric(skill, f"{count} ofert", f"{percentage:.1f}%")
+            else:
+                # Fallback to original method if no pre-computed data
+                skills_stats = processor.get_skills_statistics(display_df)
+                for skill, count in skills_stats.head(10).items():
+                    percentage = (count / len(display_df)) * 100 if len(display_df) > 0 else 0
+                    st.metric(skill, f"{count} ofert", f"{percentage:.1f}%")
+        except Exception as e:
+            st.error(f"Błąd ładowania statystyk: {e}")
     
-    # Skill combinations
+    # Skill combinations - USE PRE-COMPUTED DATA
     st.subheader("Najczęstsze Kombinacje Umiejętności")
-    combinations = processor.get_skill_combinations(display_df)
-    if not combinations.empty:
-        st.dataframe(combinations.head(15), width='stretch')
+    try:
+        is_guest = st.session_state.get('user_role') == 'guest'
+        precomputed_skills = processor.get_precomputed_skills_data(is_guest=is_guest)
+        combinations_data = precomputed_skills.get('skills_combinations', {}).get('top_20', {})
+        
+        if combinations_data:
+            # Convert to DataFrame format
+            combo_df = pd.DataFrame([
+                {'Kombinacja': combo, 'Liczba wystąpień': count} 
+                for combo, count in combinations_data.items()
+            ])
+            st.dataframe(combo_df.head(15), width='stretch')
+        else:
+            # Fallback to original method
+            combinations = processor.get_skill_combinations(display_df)
+            if not combinations.empty:
+                st.dataframe(combinations.head(15), width='stretch')
+    except Exception as e:
+        st.error(f"Błąd ładowania kombinacji: {e}")
     
     st.divider()
     
@@ -155,8 +186,41 @@ def show_skills_analysis(display_df, visualizer, processor):
             - Ocena, które umiejętności dają największą przewagę
             """)
         if visualizer:
-            fig_weight = visualizer.create_skill_weight_chart(display_df)
-            st.plotly_chart(fig_weight, width='stretch')
+            # Use pre-computed weight analysis data  
+            try:
+                is_guest = st.session_state.get('user_role') == 'guest'
+                precomputed_skills = processor.get_precomputed_skills_data(is_guest=is_guest)
+                weight_data = precomputed_skills.get('skills_weight_analysis', {})
+                
+                if weight_data:
+                    # Convert pre-computed data to DataFrame format expected by visualizer
+                    weight_df_data = []
+                    for skill, data in weight_data.items():
+                        weight_df_data.append({
+                            'skill': skill,
+                            'frequency': data.get('count', 0),
+                            'total_weight': data.get('total_weight', 0),
+                            'avg_weight': data.get('avg_weight', 0),
+                            'importance_score': data.get('importance_score', 0),
+                            'level_distribution': data.get('levels', {})
+                        })
+                    
+                    if weight_df_data:
+                        weight_df = pd.DataFrame(weight_df_data).sort_values('importance_score', ascending=False)
+                        fig_weight = visualizer.create_skills_weight_chart_from_df(weight_df)
+                        st.plotly_chart(fig_weight, width='stretch')
+                    else:
+                        # Fallback to original method
+                        fig_weight = visualizer.create_skill_weight_chart(display_df)
+                        st.plotly_chart(fig_weight, width='stretch')
+                else:
+                    # Fallback to original method
+                    fig_weight = visualizer.create_skill_weight_chart(display_df)
+                    st.plotly_chart(fig_weight, width='stretch')
+            except Exception as e:
+                # Fallback to original method on error
+                fig_weight = visualizer.create_skill_weight_chart(display_df)
+                st.plotly_chart(fig_weight, width='stretch')
     
     with col2:
         # Skills by level chart
