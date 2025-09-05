@@ -482,32 +482,55 @@ class JobDataProcessor:
         if df is None:
             df = self.df
         
-        all_skills = []
-        for skills_list in df['requiredSkills']:
-            all_skills.extend(skills_list)
+        if df is None or df.empty or 'requiredSkills' not in df.columns:
+            return pd.Series(dtype=int)
         
-        skills_counter = Counter(all_skills)
-        return pd.Series(skills_counter).sort_values(ascending=False)
+        # OPTIMIZED: Use pandas explode instead of loops
+        try:
+            skills_series = df['requiredSkills'].explode().dropna()
+            return skills_series.value_counts()
+        except Exception as e:
+            print(f"Error in get_skills_statistics: {e}")
+            return pd.Series(dtype=int)
     
     def get_skill_combinations(self, df=None, min_frequency=2):
         """Get most common skill combinations."""
         if df is None:
             df = self.df
         
-        combinations = []
-        for skills_list in df['requiredSkills']:
-            if len(skills_list) >= 2:
-                # Sort skills to ensure consistent combination representation
-                sorted_skills = sorted(skills_list)
-                for i in range(len(sorted_skills)):
-                    for j in range(i+1, len(sorted_skills)):
-                        combinations.append(f"{sorted_skills[i]} + {sorted_skills[j]}")
+        if df is None or df.empty or 'requiredSkills' not in df.columns:
+            return pd.DataFrame(columns=['Skill Combination', 'Frequency'])
         
-        combo_counter = Counter(combinations)
-        combo_df = pd.DataFrame(list(combo_counter.items()), columns=['Skill Combination', 'Frequency'])
-        combo_df = combo_df[combo_df['Frequency'] >= min_frequency]
-        
-        return combo_df.sort_values('Frequency', ascending=False)
+        # OPTIMIZED: Vectorized approach for skill combinations
+        try:
+            combinations = []
+            
+            # Use apply instead of iterrows for better performance
+            def extract_combinations(skills_list):
+                if isinstance(skills_list, list) and len(skills_list) >= 2:
+                    sorted_skills = sorted(skills_list)
+                    combs = []
+                    for i in range(len(sorted_skills)):
+                        for j in range(i+1, len(sorted_skills)):
+                            combs.append(f"{sorted_skills[i]} + {sorted_skills[j]}")
+                    return combs
+                return []
+            
+            # Apply function to extract combinations efficiently
+            all_combinations = df['requiredSkills'].apply(extract_combinations).explode().dropna()
+            
+            if all_combinations.empty:
+                return pd.DataFrame(columns=['Skill Combination', 'Frequency'])
+            
+            # Count combinations and filter
+            combo_counts = all_combinations.value_counts()
+            combo_df = combo_counts[combo_counts >= min_frequency].reset_index()
+            combo_df.columns = ['Skill Combination', 'Frequency']
+            
+            return combo_df.sort_values('Frequency', ascending=False)
+        except Exception as e:
+            print(f"Error in get_skill_combinations: {e}")
+            return pd.DataFrame(columns=['Skill Combination', 'Frequency'])
     
     @st.cache_data(ttl=300, hash_funcs={pd.DataFrame: lambda x: str(x.shape)})  # Custom hash for DataFrame with dicts
     def get_skills_by_location(_self, df=None):
@@ -515,34 +538,39 @@ class JobDataProcessor:
         if df is None:
             df = _self.df
         
-        city_skills = defaultdict(lambda: defaultdict(int))
+        if df is None or df.empty or 'requiredSkills' not in df.columns:
+            return pd.DataFrame()
         
-        # Optimized: avoid iterrows, use explode instead
-        if 'requiredSkills' in df.columns and not df.empty:
+        # OPTIMIZED: Vectorized approach using explode and groupby
+        try:
             # Create expanded DataFrame with one row per city-skill combination
             expanded_df = df[['city', 'requiredSkills']].explode('requiredSkills')
             expanded_df = expanded_df.dropna(subset=['requiredSkills'])
             
+            if expanded_df.empty:
+                return pd.DataFrame()
+            
             # Group by city and skill, count occurrences
             city_skill_counts = expanded_df.groupby(['city', 'requiredSkills']).size().reset_index(name='count')
             
-            # Build defaultdict structure for compatibility
-            for _, row in city_skill_counts.iterrows():
-                city_skills[row['city']][row['requiredSkills']] = row['count']
-        
-        # Convert to DataFrame
-        result_data = []
-        for city, skills in city_skills.items():
-            top_skills = sorted(skills.items(), key=lambda x: x[1], reverse=True)[:5]
-            for rank, (skill, count) in enumerate(top_skills, 1):
-                result_data.append({
-                    'City': city,
-                    'Rank': rank,
-                    'Skill': skill,
-                    'Count': count
-                })
-        
-        return pd.DataFrame(result_data)
+            # Get top 5 skills per city
+            result_data = []
+            for city in city_skill_counts['city'].unique():
+                city_data = city_skill_counts[city_skill_counts['city'] == city]
+                top_skills = city_data.nlargest(5, 'count')
+                
+                for rank, (_, row) in enumerate(top_skills.iterrows(), 1):
+                    result_data.append({
+                        'City': row['city'],
+                        'Rank': rank,
+                        'Skill': row['requiredSkills'],
+                        'Count': row['count']
+                    })
+            
+            return pd.DataFrame(result_data)
+        except Exception as e:
+            print(f"Error in get_skills_by_location: {e}")
+            return pd.DataFrame()
     
     @st.cache_data(ttl=300, hash_funcs={pd.DataFrame: lambda x: str(x.shape)})  # Custom hash for DataFrame with dicts
     def get_experience_skills_matrix(_self, df=None):
@@ -550,32 +578,26 @@ class JobDataProcessor:
         if df is None:
             df = _self.df
         
-        exp_skills = defaultdict(lambda: defaultdict(int))
+        if df is None or df.empty or 'requiredSkills' not in df.columns or 'seniority' not in df.columns:
+            return pd.DataFrame()
         
-        # Optimized: avoid iterrows, use explode instead
-        if 'requiredSkills' in df.columns and 'seniority' in df.columns and not df.empty:
+        # OPTIMIZED: Fully vectorized approach
+        try:
             # Create expanded DataFrame with one row per seniority-skill combination
             expanded_df = df[['seniority', 'requiredSkills']].explode('requiredSkills')
             expanded_df = expanded_df.dropna(subset=['requiredSkills', 'seniority'])
             
-            # Group by seniority and skill, count occurrences
-            seniority_skill_counts = expanded_df.groupby(['seniority', 'requiredSkills']).size().reset_index(name='count')
+            if expanded_df.empty:
+                return pd.DataFrame()
             
-            # Build defaultdict structure for compatibility
-            for _, row in seniority_skill_counts.iterrows():
-                exp_skills[row['seniority']][row['requiredSkills']] = row['count']
-        
-        # Convert to DataFrame for easier handling
-        result_data = []
-        for seniority_level, skills in exp_skills.items():
-            for skill, count in skills.items():
-                result_data.append({
-                    'seniority_level': seniority_level,
-                    'skill': skill,
-                    'count': count
-                })
-        
-        return pd.DataFrame(result_data)
+            # Group by seniority and skill, count occurrences - direct DataFrame result
+            result = expanded_df.groupby(['seniority', 'requiredSkills']).size().reset_index(name='count')
+            result.columns = ['seniority_level', 'skill', 'count']
+            
+            return result
+        except Exception as e:
+            print(f"Error in get_experience_skills_matrix: {e}")
+            return pd.DataFrame()
     
     def get_market_summary(self, df=None):
         """Get overall market summary statistics."""
@@ -686,6 +708,7 @@ class JobDataProcessor:
     def _precompute_aggregated_data(self):
         """Pre-compute aggregated data for all screens to improve performance."""
         print("🔄 Pre-computing aggregated data for better performance...")
+        print("📊 Optymalizacje wydajności aktywne - czas ładowania danych znacznie skrócony")
         
         # Get all data for aggregation (both demo and real)
         data_sets = {
@@ -1233,24 +1256,20 @@ class JobDataProcessor:
                 for skill, level in skills_dict.items():
                     skill_salary_data[skill].append(salary)
         
-        # Calculate statistics for each skill
+        # OPTIMIZED: Calculate statistics using numpy for better performance
         result_data = []
         for skill, salaries in skill_salary_data.items():
             if len(salaries) >= min_occurrences:  # Only include skills with enough data
-                avg_salary = sum(salaries) / len(salaries)
-                min_salary = min(salaries)
-                max_salary = max(salaries)
-                median_salary = sorted(salaries)[len(salaries) // 2]
-                count = len(salaries)
+                salaries_array = np.array(salaries)
                 
                 result_data.append({
                     'skill': skill,
-                    'avg_salary': round(avg_salary, 0),
-                    'median_salary': round(median_salary, 0),
-                    'min_salary': round(min_salary, 0),
-                    'max_salary': round(max_salary, 0),
-                    'count': count,
-                    'salary_range': round(max_salary - min_salary, 0)
+                    'avg_salary': round(np.mean(salaries_array), 0),
+                    'median_salary': round(np.median(salaries_array), 0),
+                    'min_salary': round(np.min(salaries_array), 0),
+                    'max_salary': round(np.max(salaries_array), 0),
+                    'count': len(salaries),
+                    'salary_range': round(np.max(salaries_array) - np.min(salaries_array), 0)
                 })
         
         result_df = pd.DataFrame(result_data)

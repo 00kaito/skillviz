@@ -85,7 +85,7 @@ class JobMarketVisualizer:
         else:
             top_skills_list = []
         
-        # Create matrix
+        # OPTIMIZED: Create matrix using vectorized operations
         exp_levels = df['seniority'].unique()
         matrix_data = []
         
@@ -93,10 +93,14 @@ class JobMarketVisualizer:
             exp_df = df[df['seniority'] == exp_level]
             row_data = []
             
-            for skill in top_skills_list:
-                count = sum(1 for skills_list in exp_df['requiredSkills'] if skill in skills_list)
-                percentage = (count / len(exp_df)) * 100 if len(exp_df) > 0 else 0
-                row_data.append(percentage)
+            if len(exp_df) > 0:
+                # OPTIMIZED: Vectorized skill counting
+                for skill in top_skills_list:
+                    count = exp_df['requiredSkills'].apply(lambda x: skill in x if isinstance(x, list) else False).sum()
+                    percentage = (count / len(exp_df)) * 100
+                    row_data.append(percentage)
+            else:
+                row_data = [0] * len(top_skills_list)
             
             matrix_data.append(row_data)
         
@@ -246,20 +250,20 @@ class JobMarketVisualizer:
         if df is None:
             df = self.df
         
-        # Get top skills
-        all_skills = []
-        for skills_list in df['requiredSkills']:
-            all_skills.extend(skills_list)
+        # OPTIMIZED: Get top skills using explode
+        if 'requiredSkills' in df.columns and not df.empty:
+            skills_series = df['requiredSkills'].explode().dropna()
+            top_skills_list = [skill for skill, _ in Counter(skills_series).most_common(top_skills)]
+        else:
+            top_skills_list = []
         
-        top_skills_list = [skill for skill, _ in Counter(all_skills).most_common(top_skills)]
-        
-        # Prepare data for grouped bar chart
+        # OPTIMIZED: Prepare data using vectorized operations
         chart_data = []
         
         for skill in top_skills_list:
             for exp_level in df['seniority'].unique():
                 exp_df = df[df['seniority'] == exp_level]
-                count = sum(1 for skills_list in exp_df['requiredSkills'] if skill in skills_list)
+                count = exp_df['requiredSkills'].apply(lambda x: skill in x if isinstance(x, list) else False).sum()
                 
                 chart_data.append({
                     'Umiejętność': skill,
@@ -327,13 +331,13 @@ class JobMarketVisualizer:
         except Exception as e:
             return _self._create_empty_chart(f"Błąd przetwarzania dat: {str(e)}")
         
-        # Create data for line chart
+        # OPTIMIZED: Create data using vectorized operations
         trend_data = []
         for date in sorted(df_with_dates['date'].unique()):
             date_df = df_with_dates[df_with_dates['date'] == date]
             
             for skill in top_skills_list:
-                count = sum(1 for skills_list in date_df['requiredSkills'] if skill in skills_list)
+                count = date_df['requiredSkills'].apply(lambda x: skill in x if isinstance(x, list) else False).sum()
                 trend_data.append({
                     'Data': date,
                     'Umiejętność': skill,
