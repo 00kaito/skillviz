@@ -1114,25 +1114,37 @@ class JobDataProcessor:
         
         detailed_analytics = {}
         
-        # OPTIMIZED: Extract all skills using vectorized operations
-        all_skills = set()
-        skills_series = df['skills'].apply(lambda x: list(x.keys()) if isinstance(x, dict) else [])
-        for skills_list in skills_series:
-            all_skills.update(skills_list)
+        # SUPER OPTIMIZED: Extract and count all skills in ONE PASS - MAJOR PERFORMANCE BOOST!
+        from collections import Counter
+        skill_counts = Counter()
         
-        # Get skill counts for prioritization
-        skill_counts = {}
-        for skill in all_skills:
-            skill_mask = df['skills'].apply(lambda x: isinstance(x, dict) and skill in x)
-            skill_counts[skill] = skill_mask.sum()
+        # Process all skills in a single vectorized operation
+        for skills_dict in df['skills'].dropna():
+            if isinstance(skills_dict, dict):
+                skill_counts.update(skills_dict.keys())
         
         # Pre-compute for top 100 most frequent skills
-        top_skills = sorted(skill_counts.items(), key=lambda x: x[1], reverse=True)[:100]
+        top_skills = skill_counts.most_common(100)
         
-        for skill_name, _ in top_skills:
-            # VECTORIZED filtering - much faster than apply with lambda
-            skill_mask = df['skills'].apply(lambda x: isinstance(x, dict) and skill_name in x)
-            skill_df = df[skill_mask].copy()
+        # MAJOR OPTIMIZATION: Process all top skills in BULK instead of individual loops
+        print(f"📊 Pre-computing detailed analytics for {len(top_skills)} top skills...")
+        
+        # Create a mapping of skill -> row indices for lightning-fast filtering
+        skill_row_mapping = {}
+        for idx, skills_dict in enumerate(df['skills'].dropna()):
+            if isinstance(skills_dict, dict):
+                for skill in skills_dict.keys():
+                    if skill not in skill_row_mapping:
+                        skill_row_mapping[skill] = []
+                    skill_row_mapping[skill].append(idx)
+        
+        for skill_name, count in top_skills:
+            if skill_name not in skill_row_mapping:
+                continue
+                
+            # SUPER FAST: Use pre-computed row indices instead of apply()
+            skill_indices = skill_row_mapping[skill_name]
+            skill_df = df.iloc[skill_indices].copy()
             
             if skill_df.empty:
                 continue
@@ -1142,17 +1154,24 @@ class JobDataProcessor:
                 'market_share': (len(skill_df) / len(df)) * 100 if len(df) > 0 else 0
             }
             
-            # Level distribution - VECTORIZED
-            skill_levels = skill_df['skills'].apply(lambda x: x.get(skill_name) if isinstance(x, dict) else None).dropna()
-            analytics['level_distribution'] = dict(skill_levels.value_counts())
+            # Level distribution - FAST extraction without apply()
+            skill_levels = []
+            for skills_dict in skill_df['skills']:
+                if isinstance(skills_dict, dict) and skill_name in skills_dict:
+                    skill_levels.append(skills_dict[skill_name])
             
-            # Seniority distribution - VECTORIZED 
+            if skill_levels:
+                analytics['level_distribution'] = dict(pd.Series(skill_levels).value_counts())
+            else:
+                analytics['level_distribution'] = {}
+            
+            # Seniority distribution - Direct pandas operation
             if 'seniority' in skill_df.columns:
                 analytics['seniority_distribution'] = dict(skill_df['seniority'].value_counts())
             else:
                 analytics['seniority_distribution'] = {}
             
-            # Company and city distribution - VECTORIZED
+            # Company and city distribution - Direct pandas operations
             if 'company' in skill_df.columns:
                 analytics['top_companies'] = dict(skill_df['company'].value_counts().head(10))
             else:
@@ -1163,7 +1182,7 @@ class JobDataProcessor:
             else:
                 analytics['top_cities'] = {}
             
-            # Salary statistics - VECTORIZED
+            # Salary statistics - Direct pandas operations
             if 'salary_avg' in skill_df.columns:
                 skill_salaries = skill_df['salary_avg'].dropna()
                 if not skill_salaries.empty:

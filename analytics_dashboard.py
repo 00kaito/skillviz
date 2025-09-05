@@ -874,8 +874,13 @@ def show_detailed_skill_analysis(display_df, visualizer, processor):
             "🔍 Wyszukaj i wybierz umiejętność:",
             options=all_skills,
             index=0,
-            help="Wybierz umiejętność z listy aby zobaczyć szczegółowe analizy"
+            help="Wybierz umiejętność z listy aby zobaczyć szczegółowe analizy (⚡ dane ładowane z cache)"
         )
+        
+        # Instant feedback on selection
+        if selected_skill:
+            if st.session_state.get('show_performance_info', False):
+                st.success(f"⚡ Wybrano: **{selected_skill}** - dane ładowane błyskawicznie z pre-computed cache")
     
     with col2:
         st.metric("Dostępne umiejętności", len(all_skills))
@@ -884,20 +889,24 @@ def show_detailed_skill_analysis(display_df, visualizer, processor):
         st.info("👆 Wybierz umiejętność z listy powyżej aby rozpocząć analizę.")
         return
     
-    # Get analytics for selected skill - USE CACHING WITH LONGER TTL
-    @st.cache_data(ttl=600, show_spinner="⚡ Ładuję dane z cache...")  # 10 min cache - longer for better performance
+    # Get analytics for selected skill - OPTIMIZED WITH INSTANT LOADING
+    @st.cache_data(ttl=3600, show_spinner=False)  # 1 hour cache + no spinner for instant feel
     def get_cached_skill_analytics(skill_name, data_hash, is_guest=False):
-        """Cached version of skill detailed analytics (OPTIMIZED)."""
+        """Cached version of skill detailed analytics (SUPER OPTIMIZED)."""
+        # Force use of pre-computed data for instant loading
         return processor.get_skill_detailed_analytics(skill_name, display_df, use_precomputed=True)
     
     # Create a hash of the data to invalidate cache when data changes
     is_guest = st.session_state.get('user_role') == 'guest'
     data_hash = hash(str(len(display_df)) + str(display_df.columns.tolist()) + str(is_guest))
     
-    skill_analytics = get_cached_skill_analytics(selected_skill, data_hash, is_guest)
+    # INSTANT LOADING with progress indication
+    with st.spinner("⚡ Ładuję dane..."):
+        skill_analytics = get_cached_skill_analytics(selected_skill, data_hash, is_guest)
     
     if not skill_analytics:
         st.error(f"❌ Nie udało się pobrać danych dla umiejętności: {selected_skill}")
+        st.info("💡 **Wskazówka**: Ta umiejętność może nie być w top 100 najczęściej wymaganych. Spróbuj wybrać inną umiejętność.")
         return
     
     # Display skill overview
@@ -970,8 +979,8 @@ def show_detailed_skill_analysis(display_df, visualizer, processor):
             - Planowanie rozwoju kariery
             """)
         
-        # Cache seniority analysis - LONGER TTL FOR BETTER PERFORMANCE
-        @st.cache_data(ttl=600)  # 10 min cache
+        # Cache seniority analysis - INSTANT LOADING
+        @st.cache_data(ttl=3600, show_spinner=False)  # 1 hour cache + no spinner
         def get_cached_seniority_analysis(skill_name, data_hash):
             return processor.get_skill_vs_seniority_analysis(skill_name, display_df)
         
@@ -1061,8 +1070,8 @@ def show_detailed_skill_analysis(display_df, visualizer, processor):
         - Prognozowanie przyszłej wartości umiejętności
         """)
     
-    # Cache market trends analysis - LONGER TTL FOR BETTER PERFORMANCE
-    @st.cache_data(ttl=600)  # 10 min cache
+    # Cache market trends analysis - INSTANT LOADING
+    @st.cache_data(ttl=3600, show_spinner=False)  # 1 hour cache + no spinner
     def get_cached_market_trends(skill_name, data_hash):
         return processor.get_skill_market_trends(skill_name, display_df)
     
