@@ -202,17 +202,18 @@ def show_sidebar_filters(auth_manager, df):
         if not auth_manager.is_authenticated() and not filtered_df.empty:
             filtered_df = filtered_df.head(50)
         
-        # City filter
-        if not filtered_df.empty:
-            # Filter out None values before sorting
-            city_values = [x for x in filtered_df['city'].unique() if x is not None]
-            cities = ['Wszystkie'] + sorted(city_values)
-        else:
-            cities = ['Wszystkie']
-        if auth_manager.is_authenticated():
-            selected_city = st.selectbox("Miasto:", cities)
-        else:
-            selected_city = st.selectbox("Miasto:", ['Wszystkie'], disabled=True, help="Zaloguj się aby filtrować")
+        # City filter - TEMPORARILY HIDDEN
+        # if not filtered_df.empty:
+        #     # Filter out None values before sorting
+        #     city_values = [x for x in filtered_df['city'].unique() if x is not None]
+        #     cities = ['Wszystkie'] + sorted(city_values)
+        # else:
+        #     cities = ['Wszystkie']
+        # if auth_manager.is_authenticated():
+        #     selected_city = st.selectbox("Miasto:", cities)
+        # else:
+        #     selected_city = st.selectbox("Miasto:", ['Wszystkie'], disabled=True, help="Zaloguj się aby filtrować")
+        selected_city = 'Wszystkie'  # Default value when hidden
         
         # Experience level filter
         if not filtered_df.empty:
@@ -226,40 +227,42 @@ def show_sidebar_filters(auth_manager, df):
         else:
             selected_exp = st.selectbox("Poziom Doświadczenia:", ['Wszystkie'], disabled=True, help="Zaloguj się aby filtrować")
         
-        # Company filter
-        if not filtered_df.empty:
-            # Filter out None values before sorting
-            company_values = [x for x in filtered_df['company'].unique() if x is not None]
-            companies = ['Wszystkie'] + sorted(company_values)
-        else:
-            companies = ['Wszystkie']
-        if auth_manager.is_authenticated():
-            selected_company = st.selectbox("Firma:", companies)
-        else:
-            selected_company = st.selectbox("Firma:", ['Wszystkie'], disabled=True, help="Zaloguj się aby filtrować")
+        # Company filter - TEMPORARILY HIDDEN
+        # if not filtered_df.empty:
+        #     # Filter out None values before sorting
+        #     company_values = [x for x in filtered_df['company'].unique() if x is not None]
+        #     companies = ['Wszystkie'] + sorted(company_values)
+        # else:
+        #     companies = ['Wszystkie']
+        # if auth_manager.is_authenticated():
+        #     selected_company = st.selectbox("Firma:", companies)
+        # else:
+        #     selected_company = st.selectbox("Firma:", ['Wszystkie'], disabled=True, help="Zaloguj się aby filtrować")
+        selected_company = 'Wszystkie'  # Default value when hidden
         
-        # Date range filter
-        date_options = {
-            'all': 'Cały okres',
-            'last_month': 'Ostatni miesiąc',
-            'last_quarter': 'Ostatni kwartał',
-            'last_year': 'Ostatni rok'
-        }
-        
-        if auth_manager.is_authenticated():
-            selected_date_range = st.selectbox(
-                "Okres czasowy:", 
-                list(date_options.keys()),
-                format_func=lambda x: date_options[x]
-            )
-        else:
-            selected_date_range = st.selectbox(
-                "Okres czasowy:", 
-                ['all'], 
-                format_func=lambda x: 'Cały okres (Wymagane logowanie)',
-                disabled=True, 
-                help="Zaloguj się aby filtrować według dat"
-            )
+        # Date range filter - TEMPORARILY HIDDEN
+        # date_options = {
+        #     'all': 'Cały okres',
+        #     'last_month': 'Ostatni miesiąc',
+        #     'last_quarter': 'Ostatni kwartał',
+        #     'last_year': 'Ostatni rok'
+        # }
+        # 
+        # if auth_manager.is_authenticated():
+        #     selected_date_range = st.selectbox(
+        #         "Okres czasowy:", 
+        #         list(date_options.keys()),
+        #         format_func=lambda x: date_options[x]
+        #     )
+        # else:
+        #     selected_date_range = st.selectbox(
+        #         "Okres czasowy:", 
+        #         ['all'], 
+        #         format_func=lambda x: 'Cały okres (Wymagane logowanie)',
+        #         disabled=True, 
+        #         help="Zaloguj się aby filtrować według dat"
+        #     )
+        selected_date_range = 'all'  # Default value when hidden
         
         # Apply additional filters (only for authenticated users)
         if not filtered_df.empty and auth_manager.is_authenticated():
