@@ -57,7 +57,7 @@ def show_guest_header():
     """Show header for guest users."""
     col1, col2 = st.columns([3, 1])
     with col1:
-        st.info("🔍 **Tryb Gościa** - Ograniczony dostęp (50 wyników). Zaloguj się dla pełnego dostępu.")
+        st.info("🔍 **Tryb Gościa** - Pełny dostęp do pierwszej zakładki. Pozostałe zakładki wymagają logowania.")
     with col2:
         if st.button("🔐 Zaloguj się"):
             st.session_state.show_login = True
@@ -135,7 +135,7 @@ def show_user_sidebar_info():
 
 def show_guest_sidebar_info():
     """Show info section for guest users in sidebar."""
-    st.info("🔍 **Tryb Gościa**\n\nMożesz przeglądać wszystkie dane dla specjalizacji **Go**. Aby uzyskać dostęp do innych specjalizacji, zaloguj się.")
+    st.info("🔍 **Tryb Gościa**\n\nMożesz przeglądać wszystkie specjalizacje w pierwszej zakładce **Analiza Umiejętności**. Pozostałe zakładki wymagają logowania.")
 
 def show_sidebar_filters(auth_manager, df):
     """Show filters section in sidebar."""
@@ -144,32 +144,14 @@ def show_sidebar_filters(auth_manager, df):
         st.header("🔍 Filtry")
         
         # Category filter - Only admins can select "all"
-        # For guests, limit to specific categories
         if not auth_manager.is_authenticated():
-            # Initialize guest category selection if not set
-            if 'guest_selected_category' not in st.session_state:
-                st.session_state.guest_selected_category = 'html' if 'html' in st.session_state.categories else (st.session_state.categories[0] if st.session_state.categories else 'html')
-            
-            # Show only HTML category for guests  
-            guest_category_options = ['html'] if 'html' in st.session_state.categories else st.session_state.categories[:1]
-            if not guest_category_options:
-                guest_category_options = ['html']  # Fallback
-            
-            # Get the current index for the selectbox
-            try:
-                current_index = guest_category_options.index(st.session_state.guest_selected_category)
-            except ValueError:
-                current_index = 0
-            
+            # Guests can see all categories (same as regular users)
+            category_options = st.session_state.categories
             selected_category = st.selectbox(
                 "Specjalizacja:", 
-                guest_category_options,
-                index=current_index,
-                format_func=lambda x: f"{x.title()} (Dostępne dla gości)" if x == 'html' else x.title(),
-                key="guest_category_selector"
+                category_options, 
+                format_func=lambda x: f"{x.title()} (Dostępne dla gości)"
             )
-            
-            st.session_state.guest_selected_category = selected_category
             st.session_state.selected_category = selected_category
             
         elif auth_manager.is_admin():
@@ -196,12 +178,8 @@ def show_sidebar_filters(auth_manager, df):
         if selected_category == 'all':
             filtered_df = df.copy() if df is not None else pd.DataFrame()
         else:
-            # Pass is_guest parameter to ensure proper data limiting
-            is_guest = not auth_manager.is_authenticated()
-            filtered_df = st.session_state.processor.get_data_by_category(selected_category, is_guest=is_guest)
-        
-        # Data limiting for guests is already handled in get_data_by_category() with is_guest parameter
-        # No additional limiting needed here
+            # Guests get full access to data (no limiting)
+            filtered_df = st.session_state.processor.get_data_by_category(selected_category)
         
         # City filter - TEMPORARILY HIDDEN
         # if not filtered_df.empty:
@@ -284,7 +262,7 @@ def show_sidebar_filters(auth_manager, df):
         if auth_manager.is_authenticated():
             st.info(f"Pokazuje {filtered_jobs} z {total_jobs} ofert")
         else:
-            st.warning(f"🔍 **Tryb Gościa**: Pokazuje {filtered_jobs} z {total_jobs} ofert (limit 50)")
+            st.info(f"🔍 **Tryb Gościa**: Wyświetla {filtered_jobs} ofert dla wybranej specjalizacji")
         
         # Clear specific category (admin only)
         if auth_manager.is_admin() and selected_category != 'all':
@@ -298,7 +276,7 @@ def display_welcome_screen():
     auth_manager = AuthManager()
     
     if not auth_manager.is_authenticated():
-        st.info("📊 **Witaj w SkillViz Analytics!**\n\nMożesz przeglądać ograniczone dane o rynku pracy (50 wyników). Zaloguj się dla pełnego dostępu do wszystkich funkcji i danych.")
+        st.info("📊 **Witaj w SkillViz Analytics!**\n\nW trybie gościa masz pełny dostęp do pierwszej zakładki z analizami umiejętności. Zaloguj się aby uzyskać dostęp do pozostałych zakładek.")
         if not st.session_state.get('data_loaded', False):
             st.warning("📁 Brak danych do wyświetlenia. Skontaktuj się z administratorem lub spróbuj później.")
     elif auth_manager.is_admin():
@@ -341,14 +319,14 @@ def show_category_info(auth_manager):
     if st.session_state.selected_category != 'all':
         st.info(f"📊 Aktualna specjalizacja: **{st.session_state.selected_category.title()}**")
     elif not auth_manager.is_authenticated():
-        st.warning("🔍 **Tryb Gościa**: Przeglądasz ograniczone dane (50 wyników). Zaloguj się dla pełnego dostępu.")
+        st.info("🔍 **Tryb Gościa**: Pełny dostęp do pierwszej zakładki. Zaloguj się dla dostępu do pozostałych zakładek.")
 
 def show_user_role_footer(auth_manager):
     """Show user role information at the bottom."""
     if not auth_manager.is_authenticated():
         col1, col2 = st.columns(2)
         with col1:
-            st.info("🔍 **Tryb Gościa**: Możesz przeglądać ograniczone analizy (limit 50 wyników).")
+            st.info("🔍 **Tryb Gościa**: Pełny dostęp do pierwszej zakładki. Pozostałe zakładki wymagają logowania.")
         with col2:
             if st.button("🔐 Zaloguj się dla pełnego dostępu"):
                 st.session_state.show_login = True

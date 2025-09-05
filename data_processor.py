@@ -1597,25 +1597,13 @@ class JobDataProcessor:
     
     def get_data(self, is_guest=False):
         """Get appropriate data based on user type."""
-        if is_guest:
-            # Guests get limited html data, or first available category data, or demo data
-            if 'html' in self.categories_data:
-                return self.categories_data['html'].head(50)  # Limit to 50
-            elif self.categories_data:  # If html not available, use first available category
-                first_category = list(self.categories_data.keys())[0]
-                return self.categories_data[first_category].head(50)  # Limit to 50
-            else:
-                return self.demo_df if self.demo_df is not None else pd.DataFrame()
-        else:
-            return self.df if self.df is not None else pd.DataFrame()
+        # Guests now get full access to all data (no restrictions)
+        return self.df if self.df is not None else pd.DataFrame()
     
     def get_categories(self, is_guest=False):
         """Get all available categories based on user type."""
-        if is_guest:
-            # Guests can see all categories but are limited to accessing only 'go'
-            return list(self.categories_data.keys()) if self.categories_data else []
-        else:
-            return list(self.categories_data.keys())
+        # Guests now have access to all categories (same as authenticated users)
+        return list(self.categories_data.keys())
     
     def has_demo_data(self):
         """Check if demo data is available."""
@@ -1627,39 +1615,15 @@ class JobDataProcessor:
     
     def get_data_by_category(self, category=None, is_guest=False):
         """Get data filtered by category based on user type."""
-        if is_guest:
-            if category is None or category == 'all':
-                # Guests get limited html data when requesting 'all'
-                result_df = pd.DataFrame()
-                if 'html' in self.categories_data:
-                    result_df = self.categories_data['html'].head(50)  # Limit to 50
-                elif self.categories_data:  # If html not available, use first available category
-                    first_category = list(self.categories_data.keys())[0]
-                    result_df = self.categories_data[first_category].head(50)  # Limit to 50
-                else:
-                    result_df = self.demo_df if self.demo_df is not None else pd.DataFrame()
-                return result_df
-            
-            category_key = category.lower().strip()
-            # Guests can only access 'html' specialization data (or first available if html not present)
-            # Always limit to 50 records for guests
-            if category_key == 'html' and 'html' in self.categories_data:
-                return self.categories_data['html'].head(50)
-            elif category_key in self.categories_data and category_key == (list(self.categories_data.keys())[0] if self.categories_data else ''):
-                # Allow access to first category if html doesn't exist
-                return self.categories_data[category_key].head(50)
-            else:
-                # For any other category, return empty (they don't have access)
-                return pd.DataFrame()
+        # Guests now get full access to all categories (no restrictions)
+        if category is None or category == 'all':
+            return self.df if self.df is not None else pd.DataFrame()
+        
+        category_key = category.lower().strip()
+        if category_key in self.categories_data:
+            return self.categories_data[category_key]
         else:
-            if category is None or category == 'all':
-                return self.df if self.df is not None else pd.DataFrame()
-            
-            category_key = category.lower().strip()
-            if category_key in self.categories_data:
-                return self.categories_data[category_key]
-            else:
-                return pd.DataFrame()
+            return pd.DataFrame()
     
     def clear_category_data(self, category=None):
         """Clear data for specific category or all data."""
