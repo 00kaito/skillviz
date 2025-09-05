@@ -204,7 +204,7 @@ def show_login_form():
             
             with st.form("login_form"):
                 email = st.text_input("Adres email:", value="a@a.com")
-                password = st.text_input("Hasło:", type="password")
+                password = st.text_input("Hasło:", type="password", value="a@a.com")
                 
                 col1, col2 = st.columns(2)
                 with col1:
