@@ -1598,9 +1598,12 @@ class JobDataProcessor:
     def get_data(self, is_guest=False):
         """Get appropriate data based on user type."""
         if is_guest:
-            # Guests get all 'go' data, or demo data if no 'go' category exists
-            if 'go' in self.categories_data:
-                return self.categories_data['go']
+            # Guests get limited html data, or first available category data, or demo data
+            if 'html' in self.categories_data:
+                return self.categories_data['html'].head(50)  # Limit to 50
+            elif self.categories_data:  # If html not available, use first available category
+                first_category = list(self.categories_data.keys())[0]
+                return self.categories_data[first_category].head(50)  # Limit to 50
             else:
                 return self.demo_df if self.demo_df is not None else pd.DataFrame()
         else:
@@ -1626,16 +1629,25 @@ class JobDataProcessor:
         """Get data filtered by category based on user type."""
         if is_guest:
             if category is None or category == 'all':
-                # Guests get all 'go' data when requesting 'all'
-                if 'go' in self.categories_data:
-                    return self.categories_data['go']
+                # Guests get limited html data when requesting 'all'
+                result_df = pd.DataFrame()
+                if 'html' in self.categories_data:
+                    result_df = self.categories_data['html'].head(50)  # Limit to 50
+                elif self.categories_data:  # If html not available, use first available category
+                    first_category = list(self.categories_data.keys())[0]
+                    result_df = self.categories_data[first_category].head(50)  # Limit to 50
                 else:
-                    return self.demo_df if self.demo_df is not None else pd.DataFrame()
+                    result_df = self.demo_df if self.demo_df is not None else pd.DataFrame()
+                return result_df
             
             category_key = category.lower().strip()
-            # Guests can only access 'go' specialization data
-            if category_key == 'go' and 'go' in self.categories_data:
-                return self.categories_data['go']
+            # Guests can only access 'html' specialization data (or first available if html not present)
+            # Always limit to 50 records for guests
+            if category_key == 'html' and 'html' in self.categories_data:
+                return self.categories_data['html'].head(50)
+            elif category_key in self.categories_data and category_key == (list(self.categories_data.keys())[0] if self.categories_data else ''):
+                # Allow access to first category if html doesn't exist
+                return self.categories_data[category_key].head(50)
             else:
                 # For any other category, return empty (they don't have access)
                 return pd.DataFrame()

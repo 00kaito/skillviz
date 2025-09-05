@@ -196,11 +196,12 @@ def show_sidebar_filters(auth_manager, df):
         if selected_category == 'all':
             filtered_df = df.copy() if df is not None else pd.DataFrame()
         else:
-            filtered_df = st.session_state.processor.get_data_by_category(selected_category)
+            # Pass is_guest parameter to ensure proper data limiting
+            is_guest = not auth_manager.is_authenticated()
+            filtered_df = st.session_state.processor.get_data_by_category(selected_category, is_guest=is_guest)
         
-        # Limit data for guest users
-        if not auth_manager.is_authenticated() and not filtered_df.empty:
-            filtered_df = filtered_df.head(50)
+        # Data limiting for guests is already handled in get_data_by_category() with is_guest parameter
+        # No additional limiting needed here
         
         # City filter - TEMPORARILY HIDDEN
         # if not filtered_df.empty:

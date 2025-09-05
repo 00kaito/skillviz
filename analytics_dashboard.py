@@ -48,6 +48,9 @@ def display_analytics():
     # Apply additional filters from sidebar if they exist
     if 'filtered_df' in st.session_state and st.session_state.filtered_df is not None:
         display_df = st.session_state.filtered_df.copy()
+        # Re-apply guest limit if user is not authenticated
+        if not auth_manager.is_authenticated() and len(display_df) > 50:
+            display_df = display_df.head(50)
     
     # Main analytics tabs
     show_analytics_tabs(display_df, visualizer, processor)
