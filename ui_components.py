@@ -143,19 +143,17 @@ def show_sidebar_filters(auth_manager, df):
         st.divider()
         st.header("🔍 Filtry")
         
-        # Category filter
-        category_options = ['all'] + st.session_state.categories
-        
-        # For guests, show all categories but limit access to 'go' only
+        # Category filter - Only admins can select "all"
+        # For guests, limit to specific categories
         if not auth_manager.is_authenticated():
             # Initialize guest category selection if not set
             if 'guest_selected_category' not in st.session_state:
-                st.session_state.guest_selected_category = 'go' if 'go' in st.session_state.categories else 'all'
+                st.session_state.guest_selected_category = 'html' if 'html' in st.session_state.categories else (st.session_state.categories[0] if st.session_state.categories else 'html')
             
-            # Show all categories but monitor selection
-            guest_category_options = ['go'] + [cat for cat in st.session_state.categories if cat != 'go']
-            if 'go' not in st.session_state.categories:
-                guest_category_options = ['all'] + st.session_state.categories
+            # Show only HTML category for guests  
+            guest_category_options = ['html'] if 'html' in st.session_state.categories else st.session_state.categories[:1]
+            if not guest_category_options:
+                guest_category_options = ['html']  # Fallback
             
             # Get the current index for the selectbox
             try:
@@ -167,28 +165,30 @@ def show_sidebar_filters(auth_manager, df):
                 "Specjalizacja:", 
                 guest_category_options,
                 index=current_index,
-                format_func=lambda x: {
-                    'go': 'Go (Dostępne)',
-                    'all': 'Go (Przykładowe dane)'
-                }.get(x, f"{x.title()} (Niedostępne - Zaloguj się)"),
+                format_func=lambda x: f"{x.title()} (Dostępne dla gości)" if x == 'html' else x.title(),
                 key="guest_category_selector"
             )
             
-            # Check if guest tries to select non-Go category
-            if selected_category != 'go' and selected_category != 'all':
-                st.warning("⚠️ Aby uzyskać dostęp do specjalizacji \"{}\" musisz się zalogować. Obecnie możesz przeglądać tylko dane specjalizacji Go.".format(selected_category.title()))
-                # Force back to 'go' without rerun to avoid infinite loop
-                st.session_state.guest_selected_category = 'go' if 'go' in st.session_state.categories else 'all'
-                selected_category = st.session_state.guest_selected_category
-            else:
-                st.session_state.guest_selected_category = selected_category
-            
+            st.session_state.guest_selected_category = selected_category
             st.session_state.selected_category = selected_category
-        else:
+            
+        elif auth_manager.is_admin():
+            # Admin can see all categories including "all"
+            category_options = ['all'] + st.session_state.categories
             selected_category = st.selectbox(
                 "Specjalizacja:", 
                 category_options, 
                 format_func=lambda x: x.title() if x != 'all' else 'Wszystkie Specjalizacje'
+            )
+            st.session_state.selected_category = selected_category
+            
+        else:
+            # Regular logged users can see only specific categories (no "all" option)
+            category_options = st.session_state.categories
+            selected_category = st.selectbox(
+                "Specjalizacja:", 
+                category_options, 
+                format_func=lambda x: x.title()
             )
             st.session_state.selected_category = selected_category
         

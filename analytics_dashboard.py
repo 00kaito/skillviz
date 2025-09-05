@@ -297,6 +297,16 @@ def show_skills_analysis(display_df, visualizer, processor):
 
 def show_experience_analysis(display_df, visualizer):
     """Show experience level analysis tab content."""
+    # Check if user is authenticated - for guests, show login message
+    from auth import AuthManager
+    auth_manager = AuthManager()
+    
+    if not auth_manager.is_authenticated():
+        st.header("Analiza Poziomów Doświadczenia")
+        st.warning("🔒 **Ta sekcja jest dostępna tylko dla zalogowanych użytkowników.**\n\nAby zobaczyć analizy poziomów doświadczenia, zaloguj się na swoje konto.")
+        st.info("👆 Kliknij przycisk 'Zaloguj się' w prawym górnym rogu strony.")
+        return
+        
     st.header("Analiza Poziomów Doświadczenia")
     
     col1, col2 = st.columns(2)
@@ -345,6 +355,16 @@ def show_experience_analysis(display_df, visualizer):
 
 def show_location_analysis(display_df, visualizer, processor):
     """Show location analysis tab content."""
+    # Check if user is authenticated - for guests, show login message
+    from auth import AuthManager
+    auth_manager = AuthManager()
+    
+    if not auth_manager.is_authenticated():
+        st.header("Analiza Według Lokalizacji")
+        st.warning("🔒 **Ta sekcja jest dostępna tylko dla zalogowanych użytkowników.**\n\nAby zobaczyć analizy geograficzne rynku pracy, zaloguj się na swoje konto.")
+        st.info("👆 Kliknij przycisk 'Zaloguj się' w prawym górnym rogu strony.")
+        return
+        
     st.header("Analiza Według Lokalizacji")
     
     # City job distribution
@@ -377,6 +397,16 @@ def show_location_analysis(display_df, visualizer, processor):
 
 def show_company_analysis(display_df, visualizer):
     """Show company insights tab content."""
+    # Check if user is authenticated - for guests, show login message
+    from auth import AuthManager
+    auth_manager = AuthManager()
+    
+    if not auth_manager.is_authenticated():
+        st.header("Analiza Firm")
+        st.warning("🔒 **Ta sekcja jest dostępna tylko dla zalogowanych użytkowników.**\n\nAby zobaczyć analizy firm i pracodawców, zaloguj się na swoje konto.")
+        st.info("👆 Kliknij przycisk 'Zaloguj się' w prawym górnym rogu strony.")
+        return
+        
     st.header("Analiza Firm")
     
     col1, col2 = st.columns(2)
@@ -430,6 +460,16 @@ def show_company_analysis(display_df, visualizer):
 
 def show_trends_analysis(display_df, visualizer, processor):
     """Show market trends tab content."""
+    # Check if user is authenticated - for guests, show login message
+    from auth import AuthManager
+    auth_manager = AuthManager()
+    
+    if not auth_manager.is_authenticated():
+        st.header("Trendy Rynkowe")
+        st.warning("🔒 **Ta sekcja jest dostępna tylko dla zalogowanych użytkowników.**\n\nAby zobaczyć analizy trendów czasowych i rynkowych, zaloguj się na swoje konto.")
+        st.info("👆 Kliknij przycisk 'Zaloguj się' w prawym górnym rogu strony.")
+        return
+        
     st.header("Trendy Rynkowe")
     
     # Publishing trends over time
@@ -489,6 +529,16 @@ def show_trends_analysis(display_df, visualizer, processor):
 
 def show_salary_analysis(display_df, visualizer, processor):
     """Show salary analysis tab content."""
+    # Check if user is authenticated - for guests, show login message
+    from auth import AuthManager
+    auth_manager = AuthManager()
+    
+    if not auth_manager.is_authenticated():
+        st.header("Analiza Dochodów")
+        st.warning("🔒 **Ta sekcja jest dostępna tylko dla zalogowanych użytkowników.**\n\nAby zobaczyć szczegółowe analizy wynagrodzeń i korelacji, zaloguj się na swoje konto.")
+        st.info("👆 Kliknij przycisk 'Zaloguj się' w prawym górnym rogu strony.")
+        return
+        
     st.header("Analiza Dochodów")
     
     # Check if salary data is available
@@ -779,6 +829,16 @@ def show_salary_analysis(display_df, visualizer, processor):
 
 def show_detailed_skill_analysis(display_df, visualizer, processor):
     """Show detailed analysis for a specific skill."""
+    # Check if user is authenticated - for guests, show login message
+    from auth import AuthManager
+    auth_manager = AuthManager()
+    
+    if not auth_manager.is_authenticated():
+        st.header("🔍 Szczegółowa Analiza Umiejętności")
+        st.warning("🔒 **Ta sekcja jest dostępna tylko dla zalogowanych użytkowników.**\n\nAby zobaczyć szczegółową analizę poszczególnych umiejętności, zaloguj się na swoje konto.")
+        st.info("👆 Kliknij przycisk 'Zaloguj się' w prawym górnym rogu strony.")
+        return
+        
     st.header("🔍 Szczegółowa Analiza Umiejętności")
     st.markdown("*Wybierz umiejętność aby zobaczyć szczegółowe statystyki rynkowe*")
     
