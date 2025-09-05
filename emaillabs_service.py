@@ -64,13 +64,13 @@ class EmailLabsService:
             }
             
             # EmailLabs new_sendmail API expects form-encoded format
-            # Using domain authorization instead of SMTP account
+            # smtp_account is required even with domain authorization
             form_data = {
                 f"to[{to_email}]": "",  # Form format for recipients
                 "subject": subject,
                 "html": html_content, 
-                "from": self.from_email
-                # Removed smtp_account to use domain authorization
+                "from": self.from_email,
+                "smtp_account": "1.itngineer.smtp"  # Format: 1.{domain_name}.smtp
             }
             
             if text_content:
