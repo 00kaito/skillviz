@@ -34,7 +34,7 @@ class EmailLabsService:
     
     def send_email(self, to_email: str, subject: str, html_content: str, text_content: Optional[str] = None) -> bool:
         """
-        Send email using EmailLabs API.
+        Send email using EmailLabs new_sendmail API.
         
         Args:
             to_email: Recipient email address
@@ -55,26 +55,27 @@ class EmailLabsService:
             return False
         
         try:
-            # EmailLabs API correct endpoint
-            url = "https://api.emaillabs.net.pl/api/send"
+            # EmailLabs API new_sendmail endpoint
+            url = "https://api.emaillabs.net.pl/api/new_sendmail"
             
             headers = {
                 "Authorization": self._get_auth_header(),
                 "Content-Type": "application/x-www-form-urlencoded"
             }
             
-            # EmailLabs API expects different parameter names
-            data = {
-                "to": to_email,
-                "from": self.from_email,
+            # EmailLabs new_sendmail API expects form-encoded format
+            form_data = {
+                f"to[{to_email}]": "",  # Form format for recipients
                 "subject": subject,
-                "html": html_content
+                "html": html_content, 
+                "from": self.from_email,
+                "smtp_account": "1.panel_name.smtp"
             }
             
             if text_content:
-                data["text"] = text_content
-            
-            response = requests.post(url, headers=headers, data=data)
+                form_data["text"] = text_content
+                
+            response = requests.post(url, headers=headers, data=form_data)
             
             if response.status_code == 200:
                 result = response.json()

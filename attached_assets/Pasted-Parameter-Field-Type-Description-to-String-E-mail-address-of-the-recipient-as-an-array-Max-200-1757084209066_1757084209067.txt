@@ -1,0 +1,73 @@
+Parameter
+Field	Type	Description
+to	String[]	
+E-mail address of the recipient (as an array). Max 200 addressess.
+
+to[message_id]optional	String	
+Unique parameter for message. Should be similar to email address. F.e. qwerty1234567890@qw.qw
+
+smtp_account	String	
+SMTP account through which you want to send a message.
+
+subject	String	
+Subject of the message (max. 128 characters).
+
+html	String	
+HTML Message in HTML format.
+
+text	String	
+Message in text format.
+
+from	String	
+E-mail address of the sender.
+
+return_pathoptional	String	
+To set your own return-path contact with CSO on email bok@emaillabs.pl .
+
+new_structureoptional	Number	
+Available send many emails to one receiver. Set as '1'.
+
+from_nameoptional	String	
+The displayed name of the sender (max. 128 characters).
+
+headersoptional	String[]	
+Additional headers in an array as key => value.
+
+ccoptional	String	
+E-mail address to which a copy of the message will be sent or in case when you want to send many copies set this filed as array.
+
+cc_nameoptional	String	
+Name of the recipient (max. 128 characters).
+
+multi_ccoptional	String	
+Set this field as '1' if you want to send many copies.
+
+bccoptional	String	
+E-mail address to which a copy of the message will be sent or in case when you want to send many copies set this filed as array (hidden address).
+
+bcc_nameoptional	String	
+Name of the recipient (max. 128 characters).
+
+multi_bccoptional	String	
+Set this field as '1' if you want to send many copies.
+
+reply_tooptional	String	
+E-mail address of "reply to".
+
+tagsoptional	String[]	
+Tags of messages in the an array (together max. 128 characters)
+
+filesoptional	String[]	
+Files that you want to add to message.
+
+files[name]optional	String	
+File name. (Also used in inline option or attachment name)
+
+files[mime]optional	String	
+Type of file
+
+files[content]optional	String	
+File content in base 64
+
+files[inline]optional	String	
+Set 1 - attachment can be inside HTML (Use this code to set attachment in HTML <img src="cid:name" /> ).
