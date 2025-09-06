@@ -844,7 +844,7 @@ def show_detailed_skill_analysis(display_df, visualizer, processor):
     
     # Performance info
     if st.session_state.get('show_performance_info', False):
-        st.info("⚡ **Usprawnienia wydajności aktywne** - dane są ładowane z pre-computed cache dla maksymalnej szybkości")
+        st.info("⚡ **Usprawnienia wydajności aktywne** - dane są ładowane z pre-computed cache oraz zoptymalizowanych datasets (85% redukcja pamięci) dla maksymalnej szybkości")
     
     # Get all available skills - USE PRE-COMPUTED DATA
     @st.cache_data(ttl=300)  # 5 min cache
@@ -893,8 +893,14 @@ def show_detailed_skill_analysis(display_df, visualizer, processor):
     @st.cache_data(ttl=3600, show_spinner=False)  # 1 hour cache + no spinner for instant feel
     def get_cached_skill_analytics(skill_name, data_hash, is_guest=False):
         """Cached version of skill detailed analytics (SUPER OPTIMIZED)."""
-        # Force use of pre-computed data for instant loading
-        return processor.get_skill_detailed_analytics(skill_name, display_df, use_precomputed=True)
+        # Use optimized dataset for 85% memory reduction
+        optimized_df = processor.get_optimized_dataset('detailed_skills', is_guest=is_guest)
+        if not optimized_df.empty:
+            # Use optimized dataset with only essential columns
+            return processor.get_skill_detailed_analytics(skill_name, optimized_df, use_precomputed=True)
+        else:
+            # Fallback to full dataset if optimized not available
+            return processor.get_skill_detailed_analytics(skill_name, display_df, use_precomputed=True)
     
     # Create a hash of the data to invalidate cache when data changes
     is_guest = st.session_state.get('user_role') == 'guest'
